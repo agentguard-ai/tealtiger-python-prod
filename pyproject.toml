@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tealtiger"
-version = "1.0.0"
+version = "1.0.1"
 description = "TealTiger - Powerful protection for AI agents with cost tracking and security guardrails"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -56,7 +56,11 @@ dependencies = [
     "boto3>=1.34.0",
     "cohere>=5.0.0",
     "mistralai>=0.1.0",
+    "click>=8.0.0",
 ]
+
+[project.scripts]
+tealtiger = "tealtiger.cli.test:cli"
 
 [project.optional-dependencies]
 dev = [

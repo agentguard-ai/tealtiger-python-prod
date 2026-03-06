@@ -39,6 +39,22 @@
 - ⚡ **Offline** - No server dependency, works anywhere
 - 🚀 **Fast** - Runs in milliseconds
 
+> 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** to learn more about TealTiger!
+
+## 🏢 Enterprise-Ready Features (v1.1.x)
+
+TealTiger v1.1.x introduces five P0 enterprise features that transform TealTiger from a developer tool into an enterprise-ready AI security platform. For complete documentation, see [Enterprise Adoption Features](./MIGRATION-GUIDE-v1.1.x.md).
+
+### 🎯 Key Enterprise Features
+
+- **Policy Rollout Modes** - Deploy policies gradually with ENFORCE, MONITOR, and REPORT_ONLY modes
+- **Deterministic Decision Contract** - Stable, typed Decision object for reliable integration flows
+- **Correlation IDs & Traceability** - End-to-end request tracking with auto-generated correlation IDs
+- **Audit Schema & Redaction** - Versioned audit events with security-by-default PII redaction
+- **Policy Test Harness** - Automated testing with CLI support and CI/CD integration
+
+See the [Enterprise Documentation](#-enterprise-documentation) section below for migration guides, best practices, and examples.
+
 ## 🚀 Quick Start
 
 ### Installation
