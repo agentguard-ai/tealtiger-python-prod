@@ -18,9 +18,9 @@ Describe how you envision this feature working.
 ## Code Example
 ```python
 # Show how you'd like to use this feature
-from agentguard import AgentGuard
+from tealtiger import TealTiger
 
-guard = AgentGuard(api_key="test", ssa_url="http://localhost:3000")
+guard = TealTiger(api_key="test", ssa_url="http://localhost:3000")
 # ...
 ```
 

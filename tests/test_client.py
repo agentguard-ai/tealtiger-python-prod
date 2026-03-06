@@ -2,12 +2,12 @@
 
 import pytest
 
-from tealtiger import tealtiger
+from tealtiger import TealTiger
 
 
 def test_client_initialization():
     """Test client initialization."""
-    guard = tealtiger(
+    guard = TealTiger(
         api_key="test-key",
         ssa_url="http://localhost:3000"
     )
@@ -19,7 +19,7 @@ def test_client_initialization():
 
 def test_client_with_custom_config():
     """Test client with custom configuration."""
-    guard = tealtiger(
+    guard = TealTiger(
         api_key="test-key",
         ssa_url="http://localhost:3000",
         timeout=10.0,
@@ -33,7 +33,7 @@ def test_client_with_custom_config():
 @pytest.mark.asyncio
 async def test_async_context_manager():
     """Test async context manager."""
-    async with tealtiger(
+    async with TealTiger(
         api_key="test-key",
         ssa_url="http://localhost:3000"
     ) as guard:
@@ -42,7 +42,7 @@ async def test_async_context_manager():
 
 def test_sync_context_manager():
     """Test sync context manager."""
-    with tealtiger(
+    with TealTiger(
         api_key="test-key",
         ssa_url="http://localhost:3000"
     ) as guard:

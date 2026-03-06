@@ -1,9 +1,9 @@
 """TealTiger Python SDK - Enterprise-grade security for AI agents."""
 
-from TealTiger.client import TealTiger
-from TealTiger.policy import PolicyBuilder, PolicyTester
-from TealTiger.types import ExecutionResult, SecurityDecision
-from TealTiger.guardrails import (
+from tealtiger.client import TealTiger
+from tealtiger.policy import PolicyBuilder, PolicyTester
+from tealtiger.types import ExecutionResult, SecurityDecision
+from tealtiger.guardrails import (
     Guardrail,
     GuardrailResult,
     GuardrailEngine,
@@ -14,7 +14,7 @@ from TealTiger.guardrails import (
 )
 
 # Cost tracking and budget management
-from TealTiger.cost import (
+from tealtiger.cost import (
     # Types
     ModelProvider,
     BudgetPeriod,
@@ -43,17 +43,39 @@ from TealTiger.cost import (
 )
 
 # Storage and budget management
-from TealTiger.cost.storage import CostStorage, InMemoryCostStorage
-from TealTiger.cost.budget import BudgetManager
+from tealtiger.cost.storage import CostStorage, InMemoryCostStorage
+from tealtiger.cost.budget import BudgetManager
 
 # Guarded AI clients
-from TealTiger.clients import (
+from tealtiger.clients import (
     TealOpenAI,
     TealOpenAIConfig,
     TealAnthropic,
     TealAnthropicConfig,
     TealAzureOpenAI,
     TealAzureOpenAIConfig,
+)
+
+# Enterprise features (v1.1.x)
+from tealtiger.core.engine.types import (
+    PolicyMode,
+    DecisionAction,
+    ReasonCode,
+    ModeConfig,
+    Decision,
+)
+from tealtiger.core.context import (
+    ExecutionContext,
+    ExecutionContextOptions,
+    ContextManager,
+)
+from tealtiger.core.engine.testing import (
+    PolicyTester as PolicyTestRunner,
+    TestCorpora,
+    PolicyTestCase,
+    PolicyTestSuite,
+    PolicyTestResult,
+    PolicyTestReport,
 )
 
 __version__ = "1.0.0"
@@ -108,5 +130,20 @@ __all__ = [
     "TealAnthropicConfig",
     "TealAzureOpenAI",
     "TealAzureOpenAIConfig",
+    # Enterprise features (v1.1.x)
+    "PolicyMode",
+    "DecisionAction",
+    "ReasonCode",
+    "ModeConfig",
+    "Decision",
+    "ExecutionContext",
+    "ExecutionContextOptions",
+    "ContextManager",
+    "PolicyTestRunner",
+    "TestCorpora",
+    "PolicyTestCase",
+    "PolicyTestSuite",
+    "PolicyTestResult",
+    "PolicyTestReport",
 ]
 

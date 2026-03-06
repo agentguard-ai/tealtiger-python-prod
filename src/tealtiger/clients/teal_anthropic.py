@@ -14,6 +14,12 @@ from ..cost.budget import BudgetManager, BudgetEnforcementResult
 from ..cost.storage import CostStorage
 from ..cost.types import TokenUsage, CostRecord
 from ..cost.utils import generate_id
+from ..core.context.execution_context import ExecutionContext
+from ..core.context.context_manager import ContextManager
+from ..core.engine.types import Decision
+from ..core.engine.teal_engine import TealEngine
+from ..core.guard.teal_guard import TealGuard
+from ..core.audit.teal_audit import TealAudit
 
 
 # Type alias for message content
@@ -32,6 +38,10 @@ class TealAnthropicConfig(BaseModel):
     budget_manager: Optional[BudgetManager] = Field(default=None, description="Budget manager instance")
     cost_storage: Optional[CostStorage] = Field(default=None, description="Cost storage instance")
     base_url: Optional[str] = Field(default=None, description="Anthropic base URL")
+    # Enterprise features
+    engine: Optional[TealEngine] = Field(default=None, description="TealEngine instance for policy evaluation")
+    guard: Optional[TealGuard] = Field(default=None, description="TealGuard instance for content validation")
+    audit: Optional[TealAudit] = Field(default=None, description="TealAudit instance for audit logging")
     
     class Config:
         arbitrary_types_allowed = True
@@ -89,6 +99,7 @@ class Messages:
         
         Args:
             **kwargs: Message creation parameters (model, messages, max_tokens, etc.)
+                     context: Optional[ExecutionContext] - Execution context for tracing
             
         Returns:
             MessageCreateResponse with security metadata
@@ -100,8 +111,59 @@ class Messages:
         agent_id = self.parent.config.agent_id
         security = SecurityMetadata()
         
+        # Extract or create execution context
+        context = kwargs.pop('context', None)
+        if context is None:
+            context = ContextManager.create_context()
+        elif not isinstance(context, ExecutionContext):
+            # Convert dict to ExecutionContext if needed
+            context = ExecutionContext(**context) if isinstance(context, dict) else context
+        
         try:
-            # 1. Run input guardrails
+            # 1. Policy evaluation with TealEngine (if configured)
+            if self.parent.engine:
+                from ..core.engine.types import RequestContext
+                policy_context = RequestContext(
+                    agent_id=agent_id,
+                    action='llm.request',
+                    context=context,
+                    model=kwargs.get('model'),
+                    content='\n'.join(
+                        self.parent._extract_text_content(m.get('content', ''))
+                        for m in kwargs.get('messages', [])
+                    )
+                )
+                decision = self.parent.engine.evaluate(policy_context)
+                
+                # Log decision with audit
+                if self.parent.audit:
+                    self.parent.audit.log_decision(decision, context)
+                
+                # Handle non-ALLOW decisions
+                if decision.action != 'ALLOW':
+                    raise ValueError(
+                        f"Policy evaluation failed: {decision.action} - {decision.reason}"
+                    )
+            
+            # 2. Content validation with TealGuard (if configured)
+            if self.parent.guard:
+                user_messages = '\n'.join(
+                    self.parent._extract_text_content(m.get('content', ''))
+                    for m in kwargs.get('messages', [])
+                    if m.get('role') == 'user'
+                )
+                guard_decision = self.parent.guard.check(user_messages, context)
+                
+                # Log guard decision
+                if self.parent.audit:
+                    self.parent.audit.log_decision(guard_decision, context)
+                
+                if guard_decision.action != 'ALLOW':
+                    raise ValueError(
+                        f"Content validation failed: {guard_decision.action} - {guard_decision.reason}"
+                    )
+            
+            # 3. Run input guardrails (legacy support)
             if self.parent.config.enable_guardrails and self.parent.guardrail_engine:
                 user_messages = '\n'.join(
                     self.parent._extract_text_content(m.get('content', ''))
@@ -118,7 +180,7 @@ class Messages:
                         f"(Risk: {guardrail_result.max_risk_score})"
                     )
             
-            # 2. Estimate cost and check budget
+            # 4. Estimate cost and check budget
             if self.parent.config.enable_cost_tracking and self.parent.cost_tracker:
                 # Estimate tokens (rough approximation: 4 chars = 1 token)
                 input_text = '\n'.join(
@@ -151,10 +213,10 @@ class Messages:
                             f"(Limit: {budget_check.blocked_by.limit})"
                         )
             
-            # 3. Make actual API call
+            # 5. Make actual API call
             response = await self.parent.client.messages.create(**kwargs)
             
-            # 4. Run output guardrails
+            # 6. Run output guardrails
             if self.parent.config.enable_guardrails and self.parent.guardrail_engine:
                 assistant_message = '\n'.join(
                     c.get('text', '') for c in response.content
@@ -169,7 +231,7 @@ class Messages:
                         f"(Risk: {output_result.max_risk_score})"
                     )
             
-            # 5. Track actual cost
+            # 7. Track actual cost
             if self.parent.config.enable_cost_tracking and self.parent.cost_tracker:
                 cost_record = self.parent.cost_tracker.calculate_actual_cost(
                     request_id,
@@ -190,7 +252,24 @@ class Messages:
                 if self.parent.budget_manager:
                     await self.parent.budget_manager.record_cost(cost_record)
             
-            # 6. Return response with security metadata
+            # 8. Log completion event
+            if self.parent.audit:
+                from ..core.audit.types import AuditEventType
+                self.parent.audit.log_event(
+                    event_type=AuditEventType.LLM_RESPONSE,
+                    context=context,
+                    metadata={
+                        'model': kwargs.get('model'),
+                        'provider': 'anthropic',
+                        'request_id': request_id,
+                        'usage': {
+                            'input_tokens': response.usage.input_tokens,
+                            'output_tokens': response.usage.output_tokens
+                        }
+                    }
+                )
+            
+            # 9. Return response with security metadata
             return MessageCreateResponse(
                 id=response.id,
                 type=response.type,
@@ -213,6 +292,19 @@ class Messages:
             )
         
         except Exception as e:
+            # Log error event
+            if self.parent.audit:
+                from ..core.audit.types import AuditEventType
+                self.parent.audit.log_event(
+                    event_type=AuditEventType.LLM_REQUEST,
+                    context=context,
+                    metadata={
+                        'error': str(e),
+                        'model': kwargs.get('model'),
+                        'provider': 'anthropic'
+                    }
+                )
+            
             if isinstance(e, ValueError):
                 raise
             raise ValueError(f"TealAnthropic error: {str(e)}")
@@ -272,6 +364,10 @@ class TealAnthropic:
         self.cost_tracker = config.cost_tracker
         self.budget_manager = config.budget_manager
         self.cost_storage = config.cost_storage
+        # Enterprise components
+        self.engine = config.engine
+        self.guard = config.guard
+        self.audit = config.audit
     
     @property
     def messages(self) -> Messages:

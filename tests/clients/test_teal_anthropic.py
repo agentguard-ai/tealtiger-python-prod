@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
-from tealtiger.clients.guarded_anthropic import (
+from tealtiger.clients.teal_anthropic import (
     TealAnthropic,
     TealAnthropicConfig,
     MessageCreateResponse,
