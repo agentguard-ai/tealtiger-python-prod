@@ -5,17 +5,17 @@
     <img alt="TealTiger Logo" src=".github/logo/tealtiger-logo-light.png" width="200">
   </picture>
   
+  # TealTiger Python SDK
   
+  > The first open-source AI agent security SDK with **client-side guardrails** 🛡️
+  
+  [![PyPI version](https://badge.fury.io/py/tealtiger.svg)](https://pypi.org/project/tealtiger/)
+  [![Python versions](https://img.shields.io/pypi/pyversions/tealtiger.svg)](https://pypi.org/project/tealtiger/)
+  [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
 
-
-# TealTiger Python SDK
-
-> The first open-source AI agent security SDK with **client-side guardrails** 🛡️
-
-[![PyPI version](https://badge.fury.io/py/tealtiger.svg)](https://pypi.org/project/tealtiger/)
-[![Python versions](https://img.shields.io/pypi/pyversions/tealtiger.svg)](https://pypi.org/project/tealtiger/)
-[![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+> 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** to learn more about TealTiger!
 
 ## ✨ What's New in v1.0.0
 
@@ -39,21 +39,260 @@
 - ⚡ **Offline** - No server dependency, works anywhere
 - 🚀 **Fast** - Runs in milliseconds
 
-> 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** to learn more about TealTiger!
-
 ## 🏢 Enterprise-Ready Features (v1.1.x)
 
-TealTiger v1.1.x introduces five P0 enterprise features that transform TealTiger from a developer tool into an enterprise-ready AI security platform. For complete documentation, see [Enterprise Adoption Features](./MIGRATION-GUIDE-v1.1.x.md).
+TealTiger v1.1.x introduces five P0 enterprise features that transform TealTiger from a developer tool into an enterprise-ready AI security platform:
 
-### 🎯 Key Enterprise Features
+### 🎯 Policy Rollout Modes
 
-- **Policy Rollout Modes** - Deploy policies gradually with ENFORCE, MONITOR, and REPORT_ONLY modes
-- **Deterministic Decision Contract** - Stable, typed Decision object for reliable integration flows
-- **Correlation IDs & Traceability** - End-to-end request tracking with auto-generated correlation IDs
-- **Audit Schema & Redaction** - Versioned audit events with security-by-default PII redaction
-- **Policy Test Harness** - Automated testing with CLI support and CI/CD integration
+Deploy AI security policies gradually with three enforcement levels:
 
-See the [Enterprise Documentation](#-enterprise-documentation) section below for migration guides, best practices, and examples.
+```python
+from tealtiger import TealEngine, PolicyMode
+
+# Development: Monitor everything
+dev_engine = TealEngine(
+    policies=my_policies,
+    mode={
+        "default_mode": PolicyMode.MONITOR
+    }
+)
+
+# Staging: Enforce critical, monitor others
+staging_engine = TealEngine(
+    policies=my_policies,
+    mode={
+        "default_mode": PolicyMode.MONITOR,
+        "policy_modes": {
+            "tools.file_delete": PolicyMode.ENFORCE,
+            "identity.admin_access": PolicyMode.ENFORCE
+        }
+    }
+)
+
+# Production: Enforce all
+prod_engine = TealEngine(
+    policies=my_policies,
+    mode={
+        "default_mode": PolicyMode.ENFORCE
+    }
+)
+```
+
+**Modes:**
+- **ENFORCE**: Block operations that violate policies
+- **MONITOR**: Allow operations but log violations
+- **REPORT_ONLY**: Allow all operations, log decisions without evaluation
+
+### 📋 Deterministic Decision Contract
+
+Stable, typed Decision object for reliable integration flows:
+
+```python
+from tealtiger import TealEngine, DecisionAction, ReasonCode
+
+decision = engine.evaluate({
+    "agent_id": "agent-001",
+    "action": "tool.execute",
+    "tool": "file_delete",
+    "correlation_id": "req-12345"
+})
+
+# Deterministic decision handling
+if decision.action == DecisionAction.ALLOW:
+    await execute_tool()
+elif decision.action == DecisionAction.DENY:
+    if ReasonCode.TOOL_NOT_ALLOWED in decision.reason_codes:
+        raise ToolNotAllowedError(decision.reason)
+elif decision.action == DecisionAction.REQUIRE_APPROVAL:
+    await request_approval(decision)
+
+# Risk-based routing
+if decision.risk_score > 80:
+    await escalate_to_human(decision)
+```
+
+**Decision Fields:**
+- `action`: ALLOW, DENY, REDACT, TRANSFORM, REQUIRE_APPROVAL, DEGRADE
+- `reason_codes`: Standardized enum values (TOOL_NOT_ALLOWED, PII_DETECTED, etc.)
+- `risk_score`: 0-100 risk level
+- `correlation_id`: Request tracing
+- `metadata`: Cost, evaluation time, triggered policies
+
+### 🔗 Correlation IDs & Traceability
+
+End-to-end request tracking across all components:
+
+```python
+from tealtiger import TealOpenAI, ContextManager
+
+# Create execution context
+context = ContextManager.create_context(
+    tenant_id="acme-corp",
+    app="customer-support",
+    env="production",
+    agent_purpose="ticket_resolution"
+)
+
+client = TealOpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    engine=my_engine,
+    audit=my_audit
+)
+
+# Context propagates through all operations
+response = await client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello"}],
+    context=context
+)
+
+# Query audit logs by correlation_id
+events = await audit.query(correlation_id=context.correlation_id)
+```
+
+**Features:**
+- Auto-generated UUID v4 correlation IDs
+- OpenTelemetry-compatible trace IDs
+- HTTP header propagation
+- Multi-tenant support
+
+### 🔒 Audit Schema & Redaction
+
+Versioned audit events with security-by-default redaction:
+
+```python
+from tealtiger import TealAudit, RedactionLevel, FileOutput
+
+# Production configuration (secure by default)
+prod_audit = TealAudit(
+    outputs=[FileOutput("./audit.log")],
+    config={
+        "input_redaction": RedactionLevel.HASH,
+        "output_redaction": RedactionLevel.HASH,
+        "detect_pii": True,
+        "debug_mode": False
+    }
+)
+
+# Audit events never contain raw prompts/responses by default
+event = {
+    "schema_version": "1.0.0",
+    "event_type": "policy.evaluation",
+    "correlation_id": "req-12345",
+    "action": DecisionAction.DENY,
+    "reason_codes": [ReasonCode.TOOL_NOT_ALLOWED],
+    "safe_inputs": {
+        "hash": "sha256:abc123...",
+        "size": 1024,
+        "category": "tool_execution"
+    }
+}
+```
+
+**Redaction Levels:**
+- **HASH**: SHA-256 hash + size (default, production-safe)
+- **SIZE_ONLY**: Content size only
+- **CATEGORY_ONLY**: Content category only
+- **FULL**: Complete redaction
+- **NONE**: Raw content (debug mode only, requires explicit opt-in)
+
+### ✅ Policy Test Harness
+
+Validate policy behavior before production deployment:
+
+```python
+from tealtiger import PolicyTester, TestCorpora, TealEngine
+
+# Define test suite
+test_suite = {
+    "name": "Customer Support Agent Policy Tests",
+    "policy": my_policies,
+    "mode": {"default_mode": PolicyMode.ENFORCE},
+    "tests": [
+        {
+            "name": "Block file deletion",
+            "context": {
+                "agent_id": "support-001",
+                "action": "tool.execute",
+                "tool": "file_delete",
+                "context": ContextManager.create_context()
+            },
+            "expected": {
+                "action": DecisionAction.DENY,
+                "reason_codes": [ReasonCode.TOOL_NOT_ALLOWED]
+            }
+        },
+        # Include starter corpora
+        *TestCorpora.prompt_injection(),
+        *TestCorpora.pii_detection()
+    ]
+}
+
+# Run tests
+engine = TealEngine(test_suite["policy"], mode=test_suite["mode"])
+tester = PolicyTester(engine)
+report = tester.run_suite(test_suite)
+
+print(f"Tests: {report.passed}/{report.total} passed")
+print(f"Coverage: {report.coverage.coverage_percentage:.1f}%")
+```
+
+**CLI Usage:**
+
+```bash
+# Run tests from file
+python -m tealtiger.cli.test ./policies/customer-support.test.json
+
+# Generate coverage report
+python -m tealtiger.cli.test ./policies/*.test.json --coverage
+
+# Export to JUnit XML for CI/CD
+python -m tealtiger.cli.test ./policies/*.test.json --format=junit --output=./results.xml
+
+# Watch mode for development
+python -m tealtiger.cli.test ./policies/*.test.json --watch
+```
+
+### 📚 Enterprise Documentation
+
+- [Migration Guide](./MIGRATION-GUIDE-v1.1.x.md) - Upgrade from v1.0.0
+- [Best Practices](./BEST-PRACTICES.md) - Policy rollout strategies
+- [Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
+- [Release Notes](./RELEASE-NOTES-v1.1.x.md) - What's new in v1.1.x
+- [Examples](./examples/) - Complete integration examples
+
+### 📊 Enterprise Feature Comparison
+
+| Feature | v1.0.0 | v1.1.x Enterprise |
+|---------|--------|-------------------|
+| **Policy Enforcement** | ✅ Basic | ✅ Multi-mode (ENFORCE/MONITOR/REPORT_ONLY) |
+| **Decision Contract** | ⚠️ Untyped | ✅ Deterministic typed Decision object |
+| **Request Tracing** | ❌ None | ✅ Auto-generated correlation IDs |
+| **Audit Logging** | ⚠️ Basic | ✅ Versioned schema with PII redaction |
+| **Policy Testing** | ❌ Manual | ✅ Automated test harness + CLI |
+| **Risk Scoring** | ❌ None | ✅ 0-100 risk scores |
+| **Reason Codes** | ⚠️ Text only | ✅ Standardized enum values |
+| **Context Propagation** | ❌ Manual | ✅ Automatic through all components |
+| **Compliance Ready** | ⚠️ Partial | ✅ OWASP/SAIF/NIST aligned |
+| **CI/CD Integration** | ❌ None | ✅ JUnit XML export, exit codes |
+| **Production Safety** | ⚠️ Basic | ✅ Security-by-default redaction |
+| **Distributed Tracing** | ❌ None | ✅ OpenTelemetry compatible |
+
+**Legend:**
+- ✅ Full support
+- ⚠️ Partial support
+- ❌ Not available
+
+### 🎯 Enterprise Adoption Path
+
+1. **Week 1-2**: Start with MONITOR mode in development
+2. **Week 3-4**: Add correlation IDs and audit logging
+3. **Week 5-6**: Write policy tests and integrate with CI/CD
+4. **Week 7-8**: Deploy to staging with mixed modes (ENFORCE critical policies)
+5. **Week 9-10**: Production rollout with full ENFORCE mode
+6. **Ongoing**: Continuous policy testing and refinement
+>>>>>>> staging/main
 
 ## 🚀 Quick Start
 

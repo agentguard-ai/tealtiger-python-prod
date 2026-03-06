@@ -11,7 +11,7 @@ A clear and concise description of what the bug is.
 
 ## To Reproduce
 Steps to reproduce the behavior:
-1. Initialize AgentGuard with '...'
+1. Initialize TealTiger with '...'
 2. Call method '...'
 3. See error
 
@@ -24,9 +24,9 @@ What actually happened.
 ## Code Sample
 ```python
 # Minimal code sample that reproduces the issue
-from agentguard import AgentGuard
+from tealtiger import TealTiger
 
-guard = AgentGuard(api_key="test", ssa_url="http://localhost:3000")
+guard = TealTiger(api_key="test", ssa_url="http://localhost:3000")
 # ...
 ```
 

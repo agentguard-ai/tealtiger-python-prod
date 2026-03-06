@@ -9,7 +9,7 @@ from hypothesis import given, strategies as st, settings
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
-from tealtiger.clients.guarded_openai import (
+from tealtiger.clients.teal_openai import (
     TealOpenAI,
     TealOpenAIConfig,
     ChatCompletionResponse,
