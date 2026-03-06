@@ -292,6 +292,7 @@ python -m tealtiger.cli.test ./policies/*.test.json --watch
 4. **Week 7-8**: Deploy to staging with mixed modes (ENFORCE critical policies)
 5. **Week 9-10**: Production rollout with full ENFORCE mode
 6. **Ongoing**: Continuous policy testing and refinement
+>>>>>>> staging/main
 
 ## 🚀 Quick Start
 

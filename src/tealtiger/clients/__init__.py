@@ -28,6 +28,31 @@ from .teal_azure_openai import (
     AzureChatCompletionResponse,
 )
 
+from .teal_gemini import (
+    TealGemini,
+    TealGeminiConfig,
+    GenerateContentRequest,
+    GenerateContentResponse,
+)
+
+from .teal_bedrock import (
+    TealBedrock,
+    TealBedrockConfig,
+    BedrockResponse,
+)
+
+from .teal_cohere import (
+    TealCohere,
+    TealCohereConfig,
+    ChatResponse,
+    EmbedResponse,
+)
+
+from .teal_mistral import (
+    TealMistral,
+    TealMistralConfig,
+)
+
 __all__ = [
     'TealOpenAI',
     'TealOpenAIConfig',
@@ -44,4 +69,17 @@ __all__ = [
     'AzureChatCompletionMessage',
     'AzureChatCompletionRequest',
     'AzureChatCompletionResponse',
+    'TealGemini',
+    'TealGeminiConfig',
+    'GenerateContentRequest',
+    'GenerateContentResponse',
+    'TealBedrock',
+    'TealBedrockConfig',
+    'BedrockResponse',
+    'TealCohere',
+    'TealCohereConfig',
+    'ChatResponse',
+    'EmbedResponse',
+    'TealMistral',
+    'TealMistralConfig',
 ]
