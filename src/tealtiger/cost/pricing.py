@@ -113,17 +113,31 @@ MODEL_PRICING: Dict[str, ModelPricing] = {
     'gemini-pro': ModelPricing(
         model='gemini-pro',
         provider='google',
-        input_cost_per_1k=0.00025,
-        output_cost_per_1k=0.0005,
-        last_updated='2026-01-31'
+        input_cost_per_1k=0.0005,  # $0.50 per 1M tokens = $0.0005 per 1K tokens
+        output_cost_per_1k=0.0015,  # $1.50 per 1M tokens = $0.0015 per 1K tokens
+        last_updated='2026-03-06'
     ),
     'gemini-pro-vision': ModelPricing(
         model='gemini-pro-vision',
         provider='google',
-        input_cost_per_1k=0.00025,
-        output_cost_per_1k=0.0005,
+        input_cost_per_1k=0.0005,
+        output_cost_per_1k=0.0015,
         image_cost=0.0025,
-        last_updated='2026-01-31'
+        last_updated='2026-03-06'
+    ),
+    'gemini-ultra': ModelPricing(
+        model='gemini-ultra',
+        provider='google',
+        input_cost_per_1k=0.007,  # $7.00 per 1M tokens = $0.007 per 1K tokens
+        output_cost_per_1k=0.021,  # $21.00 per 1M tokens = $0.021 per 1K tokens
+        last_updated='2026-03-06'
+    ),
+    'gemini-1.5-pro': ModelPricing(
+        model='gemini-1.5-pro',
+        provider='google',
+        input_cost_per_1k=0.0005,
+        output_cost_per_1k=0.0015,
+        last_updated='2026-03-06'
     ),
     'palm-2': ModelPricing(
         model='palm-2',
@@ -154,6 +168,172 @@ MODEL_PRICING: Dict[str, ModelPricing] = {
         input_cost_per_1k=0.001,
         output_cost_per_1k=0.002,
         last_updated='2026-01-31'
+    ),
+    
+    # AWS Bedrock - Anthropic Claude Models
+    'anthropic.claude-v2': ModelPricing(
+        model='anthropic.claude-v2',
+        provider='bedrock',
+        input_cost_per_1k=0.008,
+        output_cost_per_1k=0.024,
+        last_updated='2026-03-06'
+    ),
+    'anthropic.claude-v2:1': ModelPricing(
+        model='anthropic.claude-v2:1',
+        provider='bedrock',
+        input_cost_per_1k=0.008,
+        output_cost_per_1k=0.024,
+        last_updated='2026-03-06'
+    ),
+    'anthropic.claude-instant-v1': ModelPricing(
+        model='anthropic.claude-instant-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.0008,
+        output_cost_per_1k=0.0024,
+        last_updated='2026-03-06'
+    ),
+    'anthropic.claude-3-sonnet-20240229-v1:0': ModelPricing(
+        model='anthropic.claude-3-sonnet-20240229-v1:0',
+        provider='bedrock',
+        input_cost_per_1k=0.003,
+        output_cost_per_1k=0.015,
+        last_updated='2026-03-06'
+    ),
+    'anthropic.claude-3-haiku-20240307-v1:0': ModelPricing(
+        model='anthropic.claude-3-haiku-20240307-v1:0',
+        provider='bedrock',
+        input_cost_per_1k=0.00025,
+        output_cost_per_1k=0.00125,
+        last_updated='2026-03-06'
+    ),
+    
+    # AWS Bedrock - Amazon Titan Models
+    'amazon.titan-text-lite-v1': ModelPricing(
+        model='amazon.titan-text-lite-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.0003,
+        output_cost_per_1k=0.0004,
+        last_updated='2026-03-06'
+    ),
+    'amazon.titan-text-express-v1': ModelPricing(
+        model='amazon.titan-text-express-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.0008,
+        output_cost_per_1k=0.0016,
+        last_updated='2026-03-06'
+    ),
+    'amazon.titan-text-premier-v1:0': ModelPricing(
+        model='amazon.titan-text-premier-v1:0',
+        provider='bedrock',
+        input_cost_per_1k=0.0005,
+        output_cost_per_1k=0.0015,
+        last_updated='2026-03-06'
+    ),
+    
+    # AWS Bedrock - AI21 Jurassic Models
+    'ai21.j2-ultra-v1': ModelPricing(
+        model='ai21.j2-ultra-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.0188,
+        output_cost_per_1k=0.0188,
+        last_updated='2026-03-06'
+    ),
+    'ai21.j2-mid-v1': ModelPricing(
+        model='ai21.j2-mid-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.0125,
+        output_cost_per_1k=0.0125,
+        last_updated='2026-03-06'
+    ),
+    
+    # AWS Bedrock - Cohere Command Models
+    'cohere.command-text-v14': ModelPricing(
+        model='cohere.command-text-v14',
+        provider='bedrock',
+        input_cost_per_1k=0.0015,
+        output_cost_per_1k=0.002,
+        last_updated='2026-03-06'
+    ),
+    'cohere.command-light-text-v14': ModelPricing(
+        model='cohere.command-light-text-v14',
+        provider='bedrock',
+        input_cost_per_1k=0.0003,
+        output_cost_per_1k=0.0006,
+        last_updated='2026-03-06'
+    ),
+    
+    # AWS Bedrock - Meta Llama Models
+    'meta.llama2-13b-chat-v1': ModelPricing(
+        model='meta.llama2-13b-chat-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.00075,
+        output_cost_per_1k=0.001,
+        last_updated='2026-03-06'
+    ),
+    'meta.llama2-70b-chat-v1': ModelPricing(
+        model='meta.llama2-70b-chat-v1',
+        provider='bedrock',
+        input_cost_per_1k=0.00195,
+        output_cost_per_1k=0.00256,
+        last_updated='2026-03-06'
+    ),
+    
+    # Mistral AI Models
+    'mistral-small': ModelPricing(
+        model='mistral-small',
+        provider='mistral',
+        input_cost_per_1k=0.001,
+        output_cost_per_1k=0.003,
+        last_updated='2026-03-06'
+    ),
+    'mistral-small-latest': ModelPricing(
+        model='mistral-small-latest',
+        provider='mistral',
+        input_cost_per_1k=0.001,
+        output_cost_per_1k=0.003,
+        last_updated='2026-03-06'
+    ),
+    'mistral-medium': ModelPricing(
+        model='mistral-medium',
+        provider='mistral',
+        input_cost_per_1k=0.0027,
+        output_cost_per_1k=0.0081,
+        last_updated='2026-03-06'
+    ),
+    'mistral-medium-latest': ModelPricing(
+        model='mistral-medium-latest',
+        provider='mistral',
+        input_cost_per_1k=0.0027,
+        output_cost_per_1k=0.0081,
+        last_updated='2026-03-06'
+    ),
+    'mistral-large': ModelPricing(
+        model='mistral-large',
+        provider='mistral',
+        input_cost_per_1k=0.004,
+        output_cost_per_1k=0.012,
+        last_updated='2026-03-06'
+    ),
+    'mistral-large-latest': ModelPricing(
+        model='mistral-large-latest',
+        provider='mistral',
+        input_cost_per_1k=0.004,
+        output_cost_per_1k=0.012,
+        last_updated='2026-03-06'
+    ),
+    'mixtral-8x7b': ModelPricing(
+        model='mixtral-8x7b',
+        provider='mistral',
+        input_cost_per_1k=0.0007,
+        output_cost_per_1k=0.0007,
+        last_updated='2026-03-06'
+    ),
+    'mixtral-8x22b': ModelPricing(
+        model='mixtral-8x22b',
+        provider='mistral',
+        input_cost_per_1k=0.002,
+        output_cost_per_1k=0.006,
+        last_updated='2026-03-06'
     ),
 }
 
