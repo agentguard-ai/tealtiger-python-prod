@@ -12,12 +12,28 @@
   [![PyPI version](https://badge.fury.io/py/tealtiger.svg)](https://pypi.org/project/tealtiger/)
   [![Python versions](https://img.shields.io/pypi/pyversions/tealtiger.svg)](https://pypi.org/project/tealtiger/)
   [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+  [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** to learn more about TealTiger!
 
-## ✨ What's New in v1.0.0
+## ✨ What's New in v1.1.0
+
+**Multi-Provider Support** — 95%+ market coverage with 7 LLM providers!
+
+- 🔌 **TealOpenAI** — Drop-in replacement for OpenAI client
+- 🔌 **TealAnthropic** — Drop-in replacement for Anthropic client
+- 🔌 **TealGemini** — Google Gemini with multimodal support
+- 🔌 **TealBedrock** — AWS Bedrock (Claude, Titan, Jurassic, Command, Llama)
+- 🔌 **TealAzureOpenAI** — Azure OpenAI with deployment support
+- 🔌 **TealMistral** — Mistral AI with European data residency
+- 🔌 **TealCohere** — Cohere with RAG and embeddings
+- 🛡️ **TealEngine** — Policy evaluation with deterministic decisions
+- 🔒 **TealGuard** — Security guardrails (PII, prompt injection, content moderation)
+- ⚡ **TealCircuit** — Circuit breaker for cascading failure prevention
+- 📊 **TealAudit** — Audit logging with redaction-by-default
+- 💰 **Cost Tracking** — Monitor costs across 50+ models
 
 **Cost Tracking & Guarded AI Clients** - Complete feature parity with TypeScript SDK!
 
