@@ -1,11 +1,41 @@
 # Changelog
 
-All notable changes to the AgentGuard Python SDK will be documented in this file.
+All notable changes to the TealTiger Python SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.1] - 2026-04-03
+
+### Fixed
+- README rewritten to accurately reflect all features included in v1.1.0
+- Removed misleading "Enterprise Feature Comparison" table that incorrectly suggested v1.1.0 had fewer features than a non-existent "v1.1.x Enterprise"
+- Removed "What's New in v0.2.0" section
+- Removed merge conflict markers
+- Removed old URLs (tealtiger.co.in)
+
+### Changed
+- License updated from MIT to Apache 2.0 across all files (LICENSE, pyproject.toml classifier, README badges)
+- All enterprise features (TealEngine, TealGuard, TealCircuit, TealAudit, correlation IDs, policy testing) now correctly presented as included v1.1.0 features
+
+### Notes
+- **No code changes** — documentation and metadata only
+- Fully backward compatible with v1.1.0
+
+## [1.1.0] - 2026-03-15
+
+### Added
+- **TealEngine** — Deterministic policy evaluation with multi-mode enforcement (ENFORCE, MONITOR, REPORT_ONLY)
+- **TealGuard** — Client-side security guardrails (PII detection, prompt injection, content moderation)
+- **TealCircuit** — Circuit breaker for cascading failure prevention
+- **TealAudit** — Versioned audit logging with security-by-default PII redaction
+- **Correlation IDs** — Auto-generated UUID v4 with OpenTelemetry-compatible trace IDs
+- **Decision Contract** — Deterministic typed Decision object with risk scores and reason codes
+- **Policy Test Harness** — CLI/library test runner with JUnit XML export for CI/CD
+- **Multi-Provider Support** — 7 providers (OpenAI, Anthropic, Gemini, Bedrock, Azure OpenAI, Cohere, Mistral)
+- **OWASP Coverage** — 7/10 ASIs covered with SDK-only architecture
 
 ## [0.2.2] - 2026-01-31
 
@@ -159,7 +189,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common integration patterns
 - Poetry and pip support
 
-[Unreleased]: https://github.com/agentguard-ai/agentguard-python/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-staging/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/agentguard-ai/tealtiger-python-staging/releases/tag/v1.1.1
+[1.1.0]: https://github.com/agentguard-ai/tealtiger-python-staging/releases/tag/v1.1.0
 [0.2.2]: https://github.com/agentguard-ai/agentguard-python/releases/tag/v0.2.2
 [0.2.0]: https://github.com/agentguard-ai/agentguard-python/releases/tag/v0.2.0
 [0.1.1]: https://github.com/agentguard-ai/agentguard-python/releases/tag/v0.1.1
