@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tealtiger"
-version = "1.0.1"
-description = "TealTiger - Powerful protection for AI agents with cost tracking and security guardrails"
+version = "1.1.0"
+description = "TealTiger - AI agent security platform with guardrails, cost tracking, and policy management for LLM applications"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
-    {name = "TealTiger Team", email = "support@tealtiger.co.in"}
+    {name = "TealTiger Team", email = "reachout@tealtiger.ai"}
 ]
 keywords = [
     "ai",
@@ -75,10 +75,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://tealtiger.co.in"
-Documentation = "https://github.com/agentguard-ai/tealtiger-python#readme"
-Repository = "https://github.com/agentguard-ai/tealtiger-python"
-Issues = "https://github.com/agentguard-ai/tealtiger-python/issues"
+Homepage = "https://tealtiger.ai"
+Documentation = "https://docs.tealtiger.ai"
+Repository = "https://github.com/agentguard-ai/tealtiger-python-prod"
+Issues = "https://github.com/agentguard-ai/tealtiger-python-prod/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tealtiger"]
