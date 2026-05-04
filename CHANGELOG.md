@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-04
+
+### Added — Governance Bundle
+- **Governance Sidecar** — HTTP server for language-agnostic governance (`POST /evaluate`, `/validate`, `/scan`, `GET /health`, `/ready`)
+- **Lazy imports** — Faster cold starts with deferred provider client loading in `clients/__init__.py`
+- **Enhanced TealBedrock** — Updated Bedrock client with v1.2 governance integration
+- **Dockerfile.sidecar** — Docker image for Python governance sidecar
+
+### Fixed
+- Cost types alignment with TypeScript SDK
+
+### Changed
+- Version bumped to 1.2.0
+- README updated with v1.2.0 governance bundle features
+
 ## [1.1.1] - 2026-04-03
 
 ### Fixed
@@ -189,8 +204,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common integration patterns
 - Poetry and pip support
 
-[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-staging/compare/v1.1.1...HEAD
-[1.1.1]: https://github.com/agentguard-ai/tealtiger-python-staging/releases/tag/v1.1.1
+[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.2.0
+[1.1.1]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.1.1
 [1.1.0]: https://github.com/agentguard-ai/tealtiger-python-staging/releases/tag/v1.1.0
 [0.2.2]: https://github.com/agentguard-ai/agentguard-python/releases/tag/v0.2.2
 [0.2.0]: https://github.com/agentguard-ai/agentguard-python/releases/tag/v0.2.0
