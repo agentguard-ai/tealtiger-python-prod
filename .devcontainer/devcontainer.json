@@ -1,0 +1,45 @@
+{
+  "name": "TealTiger Python SDK Development",
+  "dockerFile": "../Dockerfile.dev",
+  "context": "..",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "GitHub.copilot",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.mypyEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        }
+      }
+    }
+  },
+  
+  "forwardPorts": [8888],
+  
+  "postCreateCommand": "pip install -e '.[dev]'",
+  
+  "remoteUser": "tealtiger",
+  
+  "mounts": [
+    "source=${localEnv:HOME}/.aws,target=/home/tealtiger/.aws,type=bind,consistency=cached"
+  ],
+  
+  "containerEnv": {
+    "PYTHONUNBUFFERED": "1"
+  }
+}

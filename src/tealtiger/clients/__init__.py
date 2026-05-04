@@ -2,8 +2,14 @@
 TealTiger Guarded Clients
 
 Drop-in replacements for AI provider clients with integrated security and cost tracking.
+
+Clients are lazily imported to avoid requiring all provider SDKs to be installed.
+Only the provider SDK you actually use needs to be installed.
 """
 
+from typing import TYPE_CHECKING
+
+# Always available (OpenAI is a required dependency)
 from .teal_openai import (
     TealOpenAI,
     TealOpenAIConfig,
@@ -28,32 +34,51 @@ from .teal_azure_openai import (
     AzureChatCompletionResponse,
 )
 
-from .teal_gemini import (
-    TealGemini,
-    TealGeminiConfig,
-    GenerateContentRequest,
-    GenerateContentResponse,
-)
+# Lazy imports for optional providers
+def __getattr__(name: str):
+    """Lazy import for optional provider clients."""
+    if name in ("TealGemini", "TealGeminiConfig", "GenerateContentRequest", "GenerateContentResponse"):
+        from .teal_gemini import TealGemini, TealGeminiConfig, GenerateContentRequest, GenerateContentResponse
+        _map = {
+            "TealGemini": TealGemini,
+            "TealGeminiConfig": TealGeminiConfig,
+            "GenerateContentRequest": GenerateContentRequest,
+            "GenerateContentResponse": GenerateContentResponse,
+        }
+        return _map[name]
 
-from .teal_bedrock import (
-    TealBedrock,
-    TealBedrockConfig,
-    BedrockResponse,
-)
+    if name in ("TealBedrock", "TealBedrockConfig", "BedrockResponse"):
+        from .teal_bedrock import TealBedrock, TealBedrockConfig, BedrockResponse
+        _map = {
+            "TealBedrock": TealBedrock,
+            "TealBedrockConfig": TealBedrockConfig,
+            "BedrockResponse": BedrockResponse,
+        }
+        return _map[name]
 
-from .teal_cohere import (
-    TealCohere,
-    TealCohereConfig,
-    ChatResponse,
-    EmbedResponse,
-)
+    if name in ("TealCohere", "TealCohereConfig", "ChatResponse", "EmbedResponse"):
+        from .teal_cohere import TealCohere, TealCohereConfig, ChatResponse, EmbedResponse
+        _map = {
+            "TealCohere": TealCohere,
+            "TealCohereConfig": TealCohereConfig,
+            "ChatResponse": ChatResponse,
+            "EmbedResponse": EmbedResponse,
+        }
+        return _map[name]
 
-from .teal_mistral import (
-    TealMistral,
-    TealMistralConfig,
-)
+    if name in ("TealMistral", "TealMistralConfig"):
+        from .teal_mistral import TealMistral, TealMistralConfig
+        _map = {
+            "TealMistral": TealMistral,
+            "TealMistralConfig": TealMistralConfig,
+        }
+        return _map[name]
+
+    raise AttributeError(f"module 'tealtiger.clients' has no attribute {name!r}")
+
 
 __all__ = [
+    # Always available
     'TealOpenAI',
     'TealOpenAIConfig',
     'ChatCompletionMessage',
@@ -69,6 +94,7 @@ __all__ = [
     'AzureChatCompletionMessage',
     'AzureChatCompletionRequest',
     'AzureChatCompletionResponse',
+    # Lazy-loaded
     'TealGemini',
     'TealGeminiConfig',
     'GenerateContentRequest',
