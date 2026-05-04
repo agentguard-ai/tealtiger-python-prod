@@ -10,7 +10,7 @@ from typing import Literal, Optional, Dict, Any, List
 from datetime import datetime
 
 # Type aliases for literals
-ModelProvider = Literal['openai', 'anthropic', 'azure-openai', 'google', 'cohere', 'custom']
+ModelProvider = Literal['openai', 'anthropic', 'azure-openai', 'google', 'bedrock', 'cohere', 'mistral', 'custom']
 BudgetPeriod = Literal['hourly', 'daily', 'weekly', 'monthly', 'total']
 BudgetAction = Literal['alert', 'block', 'throttle']
 AlertSeverity = Literal['info', 'warning', 'critical']

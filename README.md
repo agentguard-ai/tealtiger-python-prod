@@ -14,10 +14,30 @@
   [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
-  [![v1.1.1](https://img.shields.io/badge/version-v1.1.1-teal.svg)](https://pypi.org/project/tealtiger/)
+  [![v1.2.0](https://img.shields.io/badge/version-v1.2.0-teal.svg)](https://pypi.org/project/tealtiger/)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
+
+## What's New in v1.2.0 — Governance Bundle
+
+TealTiger v1.2 introduces the **Governance Bundle**: 7 governance modules running in parallel through the new `TealEngineV12` orchestration layer.
+
+- **TealEngineV12** — Parallel module evaluation with "most restrictive action wins" merge and fail-closed defaults
+- **TealSecrets** — Secret detection with 500+ patterns and confidence scoring
+- **TealRegistry** — Model/tool allowlisting with provenance verification
+- **TealReliability** — Retry budgets, circuit breakers, and fallback chains
+- **TealMemory** — Memory governance across 5 scopes and 4 classifications
+- **GovernanceDashboard** — Governance visibility UI
+- **BundleExporter** — Evidence export in SARIF v2.1.0, JUnit XML, and JSON
+- **Docker Sidecar** — Language-agnostic governance via `POST /evaluate` over HTTP
+
+```bash
+# Three ways to use TealTiger v1.2
+npm install tealtiger                                              # TypeScript
+pip install tealtiger                                              # Python
+docker run -p 8080:8080 tealtigeradmin/tealtiger-typescript:1.2    # Any language
+```
 
 ## 🚀 Quick Start
 
@@ -254,7 +274,7 @@ if not check.allowed:
 
 ## 🛡️ OWASP Top 10 for Agentic Applications Coverage
 
-TealTiger v1.1.0 covers **7 out of 10** OWASP ASIs through its SDK-only architecture:
+TealTiger v1.2.0 covers **7 out of 10** OWASP ASIs through its SDK-only architecture:
 
 | ASI | Vulnerability | Coverage | Components |
 |-----|--------------|----------|------------|
