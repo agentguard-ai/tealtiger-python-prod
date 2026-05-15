@@ -1,0 +1,139 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+
+env:
+  REGISTRY_GHCR: ghcr.io
+  REGISTRY_DOCKERHUB: docker.io
+  IMAGE_NAME: tealtiger/python-sdk
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        variant:
+          - name: production
+            dockerfile: Dockerfile
+            suffix: ''
+          - name: dev
+            dockerfile: Dockerfile.dev
+            suffix: '-dev'
+          - name: alpine
+            dockerfile: Dockerfile.alpine
+            suffix: '-alpine'
+          - name: jupyter
+            dockerfile: Dockerfile.jupyter
+            suffix: '-jupyter'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_GHCR }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_DOCKERHUB }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY_DOCKERHUB }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=${{ matrix.variant.suffix }}
+            type=ref,event=pr,suffix=${{ matrix.variant.suffix }}
+            type=semver,pattern={{version}},suffix=${{ matrix.variant.suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ matrix.variant.suffix }}
+            type=semver,pattern={{major}},suffix=${{ matrix.variant.suffix }}
+            type=sha,suffix=${{ matrix.variant.suffix }}
+            type=raw,value=latest,suffix=${{ matrix.variant.suffix }},enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=TealTiger Python SDK (${{ matrix.variant.name }})
+            org.opencontainers.image.description=AI agent security with guardrails and cost tracking
+            org.opencontainers.image.vendor=TealTiger
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.variant.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Run Trivy vulnerability scanner
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}:${{ github.sha }}${{ matrix.variant.suffix }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.variant.name }}.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results-${{ matrix.variant.name }}.sarif'
+          category: 'container-${{ matrix.variant.name }}'
+
+  test-images:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    strategy:
+      matrix:
+        variant: [production, dev, alpine]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Pull image
+        run: |
+          docker pull ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.variant }}
+      
+      - name: Test image
+        run: |
+          docker run --rm ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.variant }} \
+            python -c "import tealtiger; print(f'TealTiger version: {tealtiger.__version__}')"
+      
+      - name: Test examples
+        run: |
+          docker run --rm ${{ env.REGISTRY_GHCR }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.variant }} \
+            python -c "from tealtiger import TealOpenAI, GuardrailEngine; print('Imports successful')"

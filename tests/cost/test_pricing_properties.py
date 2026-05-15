@@ -33,7 +33,7 @@ def test_pricing_lookup_returns_valid_pricing(model: str):
         f"Returned pricing model should match or be a base version of requested model"
     assert pricing.input_cost_per_1k >= 0, "Input cost should be non-negative"
     assert pricing.output_cost_per_1k >= 0, "Output cost should be non-negative"
-    assert pricing.provider in ['openai', 'anthropic', 'google', 'cohere', 'azure-openai', 'custom'], \
+    assert pricing.provider in ['openai', 'anthropic', 'google', 'cohere', 'azure-openai', 'bedrock', 'mistral', 'deepseek', 'groq', 'together', 'xai', 'huggingface', 'custom'], \
         f"Provider should be valid: {pricing.provider}"
 
 

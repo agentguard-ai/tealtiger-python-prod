@@ -1,0 +1,40 @@
+# TealTiger Python SDK - Development Image
+# Includes dev tools, testing frameworks, and debugging utilities
+
+FROM python:3.11-slim
+
+LABEL maintainer="TealTiger Team <support@tealtiger.co.in>"
+LABEL description="TealTiger Python SDK - Development Environment"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    vim \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY pyproject.toml README.md LICENSE ./
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY examples/ ./examples/
+
+# Install package in editable mode with dev dependencies
+RUN pip install --no-cache-dir -e ".[dev]"
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash tealtiger && \
+    chown -R tealtiger:tealtiger /app
+
+USER tealtiger
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Default command
+CMD ["bash"]

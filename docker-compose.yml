@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Production SDK image (v1.1.1)
+  tealtiger-python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tealtigeradmin/tealtiger-python:1.1.1
+    container_name: tealtiger-python
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+    volumes:
+      - ./workspace:/workspace
+    working_dir: /workspace
+    command: python
+    stdin_open: true
+    tty: true
+
+  # Governance Sidecar (v1.2) — language-agnostic HTTP governance API
+  tealtiger-python-governance:
+    build:
+      context: .
+      dockerfile: Dockerfile.sidecar
+    image: tealtigeradmin/tealtiger-python:1.2-governance
+    container_name: tealtiger-python-governance
+    ports:
+      - "8081:8080"
+    environment:
+      - TEALTIGER_PORT=8080
+      - TEALTIGER_HOST=0.0.0.0
+      - TEALTIGER_MODE=${TEALTIGER_MODE:-ENFORCE}
+      - TEALTIGER_POLICY_DIR=/etc/tealtiger/policies
+      - TEALTIGER_LOG_LEVEL=${TEALTIGER_LOG_LEVEL:-info}
+    volumes:
+      - ./policies:/etc/tealtiger/policies:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Development image
+  tealtiger-python-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: tealtigeradmin/tealtiger-python:dev
+    container_name: tealtiger-python-dev
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - .:/app
+      - ./workspace:/workspace
+    working_dir: /app
+    command: bash
+    stdin_open: true
+    tty: true
+
+  # Alpine image
+  tealtiger-python-alpine:
+    build:
+      context: .
+      dockerfile: Dockerfile.alpine
+    image: tealtigeradmin/tealtiger-python:alpine
+    container_name: tealtiger-python-alpine
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./workspace:/workspace
+    working_dir: /workspace
+    command: python
+    stdin_open: true
+    tty: true
+
+  # Jupyter notebook
+  tealtiger-jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    image: tealtigeradmin/tealtiger-python:jupyter
+    container_name: tealtiger-jupyter
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./examples:/app/examples
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+
+networks:
+  default:
+    name: tealtiger-network
