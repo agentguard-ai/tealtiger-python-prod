@@ -14,20 +14,31 @@
   [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
-  [![v1.2.0](https://img.shields.io/badge/version-v1.2.0-teal.svg)](https://pypi.org/project/tealtiger/)
+  [![v1.3.0](https://img.shields.io/badge/version-v1.3.0-teal.svg)](https://pypi.org/project/tealtiger/)
+  [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/X2ePf8QAj)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
 
-## What's New in v1.2.0 — Governance Bundle
+## What's New in v1.3.0 — Autonomous Agent Governance
 
-TealTiger v1.2 introduces the **Governance Bundle**: 7 governance modules running in parallel through the new `TealEngineV12` orchestration layer.
+TealTiger v1.3 introduces **cryptographically verifiable governance** for autonomous AI agents with 7 new modules:
 
-- **TealEngineV12** — Parallel module evaluation with "most restrictive action wins" merge and fail-closed defaults
-- **TealSecrets** — Secret detection with 500+ patterns and confidence scoring
-- **TealRegistry** — Model/tool allowlisting with provenance verification
-- **TealReliability** — Retry budgets, circuit breakers, and fallback chains
-- **TealMemory** — Memory governance across 5 scopes and 4 classifications
+- **TealEngineV13** — Pre/post evaluation pipeline with FREEZE rules, automation levels, NHI verification
+- **TealProof** — Cryptographic governance receipts (Merkle trees + RFC 3161 timestamping)
+- **TealFlow** — Declarative YAML governance workflows with org-level inheritance
+- **TealClassifier** — Local ONNX-based ML inference for content classification (≤20ms)
+- **TealDrift** — Behavioral drift detection with statistical baselines
+- **TealState** — Context size governance with provenance metadata
+- **TealTemporal** — Session TTL, cooldown periods, time-of-day restrictions
+- **TealMonitor v2** — Governance-owned cost ceilings, anomaly detection, reasoning-token budgets
+- **OWASP Agentic Top 10 Policy Pack** — Zero-config governance for all 10 ASI risks
+- **Platform Adapters** — AWS Bedrock Agents, AWS AgentCore, Azure AI Agent Service
+- **12 LLM Providers** — Added DeepSeek, Groq, Together AI, HuggingFace TGI, xAI
+
+```bash
+pip install tealtiger==1.3.0
+```
 - **GovernanceDashboard** — Governance visibility UI
 - **BundleExporter** — Evidence export in SARIF v2.1.0, JUnit XML, and JSON
 - **Docker Sidecar** — Language-agnostic governance via `POST /evaluate` over HTTP
@@ -318,11 +329,14 @@ Apache 2.0 — see [LICENSE](https://github.com/agentguard-ai/tealtiger-python-p
 ## 🔗 Links
 
 - **PyPI**: https://pypi.org/project/tealtiger/
-- **GitHub**: https://github.com/agentguard-ai/tealtiger-python-prod
+- **GitHub**: https://github.com/agentguard-ai/tealtiger
 - **TypeScript SDK**: https://www.npmjs.com/package/tealtiger
 - **Documentation**: https://docs.tealtiger.ai
+- **Discord**: https://discord.gg/X2ePf8QAj
+- **LinkedIn**: https://www.linkedin.com/company/tealtiger/
+- **X (Twitter)**: https://x.com/TealtigerAI
 - **Contact**: reachout@tealtiger.ai
-- **Issues**: https://github.com/agentguard-ai/tealtiger-python-prod/issues
+- **Issues**: https://github.com/agentguard-ai/tealtiger/issues
 
 ---
 
