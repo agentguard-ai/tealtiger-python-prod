@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from openai import AsyncOpenAI
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
+from ..guardrails.base import CustomGuardrail
 from ..cost.tracker import CostTracker
 from ..cost.budget import BudgetManager, BudgetEnforcementResult
 from ..cost.storage import CostStorage
@@ -30,6 +31,7 @@ class TealOpenAIConfig(BaseModel):
     enable_guardrails: bool = Field(default=True, description="Enable guardrails")
     enable_cost_tracking: bool = Field(default=True, description="Enable cost tracking")
     guardrail_engine: Optional[GuardrailEngine] = Field(default=None, description="Guardrail engine instance")
+    custom_guardrails: List[CustomGuardrail] = Field(default_factory=list, description="Custom guardrails")
     cost_tracker: Optional[CostTracker] = Field(default=None, description="Cost tracker instance")
     budget_manager: Optional[BudgetManager] = Field(default=None, description="Budget manager instance")
     cost_storage: Optional[CostStorage] = Field(default=None, description="Cost storage instance")
@@ -360,6 +362,11 @@ class TealOpenAI:
             organization=config.organization
         )
         self.guardrail_engine = config.guardrail_engine
+        if config.custom_guardrails:
+            if self.guardrail_engine is None:
+                self.guardrail_engine = GuardrailEngine()
+            for guardrail in config.custom_guardrails:
+                self.guardrail_engine.register_guardrail(guardrail)
         self.cost_tracker = config.cost_tracker
         self.budget_manager = config.budget_manager
         self.cost_storage = config.cost_storage

@@ -5,6 +5,7 @@ import asyncio
 import pytest
 
 from tealtiger.guardrails import (
+    CustomGuardrail,
     GuardrailEngine,
     PIIDetectionGuardrail,
     ContentModerationGuardrail,
@@ -72,6 +73,30 @@ class TestGuardrailEngine:
 
         assert not result.passed
         assert "PromptInjection" in result.failed_guardrails
+
+    @pytest.mark.asyncio
+    async def test_custom_guardrail_function(self):
+        """Test function-based custom guardrails."""
+        engine = GuardrailEngine()
+
+        async def medical_terms_guardrail(input_data):
+            found = next(
+                (term for term in ["diagnosis", "prescription", "treatment"] if term in input_data.lower()),
+                None,
+            )
+            return {
+                "passed": found is None,
+                "reason": f"Blocked medical term: {found}" if found else None,
+            }
+
+        engine.register_guardrail(CustomGuardrail("medical-terms-blocker", medical_terms_guardrail))
+
+        allowed = await engine.execute("General wellness message")
+        assert allowed.passed
+
+        blocked = await engine.execute("Share the diagnosis")
+        assert not blocked.passed
+        assert "medical-terms-blocker" in blocked.failed_guardrails
 
     @pytest.mark.asyncio
     async def test_detect_multiple_threats(self):
@@ -332,4 +357,3 @@ class TestRealWorldScenarios:
         assert "PromptInjection" in result.failed_guardrails
         assert "PIIDetection" in result.failed_guardrails
         assert result.max_risk_score == 100  # DAN jailbreak has max risk
-

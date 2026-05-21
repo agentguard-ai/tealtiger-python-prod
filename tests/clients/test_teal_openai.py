@@ -14,6 +14,7 @@ from tealtiger.clients.teal_openai import (
     ChatCompletionResponse,
 )
 from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
+from tealtiger.guardrails import CustomGuardrail
 from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
 from tealtiger.cost.budget import BudgetManager
 from tealtiger.cost.storage import InMemoryCostStorage
@@ -128,6 +129,40 @@ async def test_guardrails_block_request():
             )
         
         # Verify API was not called
+        assert not mock_create.called
+
+
+@pytest.mark.asyncio
+async def test_custom_guardrails_block_request():
+    """Test that custom guardrails from client config block before API calls."""
+    async def medical_terms_guardrail(input_data):
+        found = next(
+            (term for term in ["diagnosis", "prescription", "treatment"] if term in input_data.lower()),
+            None,
+        )
+        return {
+            "passed": found is None,
+            "reason": f"Blocked medical term: {found}" if found else None,
+        }
+
+    config = TealOpenAIConfig(
+        api_key='test-key',
+        enable_guardrails=True,
+        enable_cost_tracking=False,
+        custom_guardrails=[
+            CustomGuardrail("medical-terms-blocker", medical_terms_guardrail)
+        ],
+    )
+    client = TealOpenAI(config)
+
+    mock_response = create_mock_response('gpt-4', 50, 10)
+    with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
+        with pytest.raises(ValueError, match="Guardrail check failed"):
+            await client.chat.create(
+                model='gpt-4',
+                messages=[{'role': 'user', 'content': 'Please include the diagnosis'}]
+            )
+
         assert not mock_create.called
 
 
