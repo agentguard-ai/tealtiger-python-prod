@@ -88,6 +88,7 @@ class ChatCompletionResponse(BaseModel):
     model: str
     choices: List[Dict[str, Any]]
     usage: Dict[str, int]
+    cost: Optional[float] = None
     security: Optional[SecurityMetadata] = None
 
 
@@ -229,7 +230,7 @@ class ChatCompletions:
                 cost_record = self.parent.cost_tracker.calculate_actual_cost(
                     request_id,
                     agent_id,
-                    kwargs['model'],
+                    response.model,
                     TokenUsage(
                         input_tokens=response.usage.prompt_tokens,
                         output_tokens=response.usage.completion_tokens,
@@ -285,6 +286,7 @@ class ChatCompletions:
                     'completion_tokens': response.usage.completion_tokens,
                     'total_tokens': response.usage.total_tokens,
                 },
+                cost=security.cost_record.actual_cost if security.cost_record else None,
                 security=security
             )
         
@@ -370,4 +372,3 @@ class TealOpenAI:
     def chat(self) -> ChatCompletions:
         """Access chat completions API."""
         return ChatCompletions(self)
-

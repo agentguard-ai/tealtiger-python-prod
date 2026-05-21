@@ -354,21 +354,31 @@ def get_model_pricing(model: str, provider: Optional[ModelProvider] = None) -> O
         return None
     
     # Try exact match first
-    if model in MODEL_PRICING:
-        return MODEL_PRICING[model]
+    exact_pricing = MODEL_PRICING.get(model)
+    if exact_pricing and (not provider or exact_pricing.provider == provider):
+        return exact_pricing
     
     # Try case-insensitive match
     normalized = model.lower().strip()
     for key, pricing in MODEL_PRICING.items():
-        if key.lower() == normalized:
+        if key.lower() == normalized and (not provider or pricing.provider == provider):
             return pricing
     
-    # Try partial match for versioned models (only if normalized is not empty)
+    # Try longest-prefix match for versioned models (e.g. gpt-4-turbo-2024-04-09).
     if normalized:
-        for key, pricing in MODEL_PRICING.items():
-            if normalized.startswith(key.lower()) or key.lower().startswith(normalized):
-                if not provider or pricing.provider == provider:
-                    return pricing
+        candidates = sorted(
+            (
+                (key, pricing)
+                for key, pricing in MODEL_PRICING.items()
+                if not provider or pricing.provider == provider
+            ),
+            key=lambda item: len(item[0]),
+            reverse=True
+        )
+        for key, pricing in candidates:
+            normalized_key = key.lower()
+            if normalized.startswith(normalized_key) or normalized_key.startswith(normalized):
+                return pricing
     
     return None
 
