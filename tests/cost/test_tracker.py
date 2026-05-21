@@ -39,6 +39,41 @@ def test_missing_pricing_data_returns_zero_cost():
     assert record.breakdown.output_cost == 0.0
 
 
+def test_gpt_4_turbo_preview_uses_turbo_pricing():
+    """Test GPT-4 Turbo preview uses Turbo pricing instead of GPT-4 pricing."""
+    tracker = CostTracker()
+
+    tokens = TokenUsage(
+        input_tokens=1000,
+        output_tokens=500,
+        total_tokens=1500
+    )
+
+    estimate = tracker.estimate_cost('gpt-4-turbo-preview', tokens, 'openai')
+
+    assert estimate.model == 'gpt-4-turbo-preview'
+    assert estimate.provider == 'openai'
+    assert estimate.estimated_cost == pytest.approx(0.025)
+    assert estimate.breakdown.input_cost == pytest.approx(0.01)
+    assert estimate.breakdown.output_cost == pytest.approx(0.015)
+
+
+def test_versioned_gpt_4_turbo_alias_prefers_turbo_over_gpt_4():
+    """Test longest-prefix matching for versioned GPT-4 Turbo aliases."""
+    tracker = CostTracker()
+
+    tokens = TokenUsage(
+        input_tokens=1000,
+        output_tokens=1000,
+        total_tokens=2000
+    )
+
+    estimate = tracker.estimate_cost('gpt-4-turbo-2024-04-09', tokens, 'openai')
+
+    assert estimate.model == 'gpt-4-turbo'
+    assert estimate.estimated_cost == pytest.approx(0.04)
+
+
 def test_vision_models_with_image_costs():
     """
     Test vision models with per-image pricing.
@@ -308,4 +343,3 @@ def test_estimate_timestamp_format():
     assert isinstance(estimate.timestamp, str)
     assert 'T' in estimate.timestamp  # ISO format includes 'T'
     assert len(estimate.timestamp) > 10  # Should be a full timestamp
-

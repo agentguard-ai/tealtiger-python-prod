@@ -62,6 +62,7 @@ async def test_basic_chat_completion():
         assert response.model == 'gpt-4'
         assert len(response.choices) == 1
         assert response.choices[0]['message']['content'] == 'Test response'
+        assert response.cost is None
 
 
 
@@ -155,7 +156,60 @@ async def test_cost_tracking_enabled():
         assert response.security is not None
         assert response.security.cost_record is not None
         assert response.security.cost_record.actual_cost > 0
+        assert response.cost == pytest.approx(response.security.cost_record.actual_cost)
         assert storage.size() == 1
+
+
+@pytest.mark.asyncio
+async def test_cost_tracking_uses_turbo_preview_pricing_and_exposes_numeric_cost():
+    """Test OpenAI responses expose numeric cost with GPT-4 Turbo preview pricing."""
+    tracker = CostTracker(CostTrackerConfig(enabled=True))
+
+    config = TealOpenAIConfig(
+        api_key='test-key',
+        enable_guardrails=False,
+        enable_cost_tracking=True,
+        cost_tracker=tracker
+    )
+    client = TealOpenAI(config)
+
+    mock_response = create_mock_response('gpt-4-turbo-preview', 1000, 500)
+    with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
+        response = await client.chat.create(
+            model='gpt-4-turbo-preview',
+            messages=[{'role': 'user', 'content': 'Hello'}]
+        )
+
+        assert response.cost == pytest.approx(0.025)
+        assert response.security is not None
+        assert response.security.cost_record is not None
+        assert response.security.cost_record.actual_cost == pytest.approx(0.025)
+
+
+@pytest.mark.asyncio
+async def test_cost_tracking_uses_most_specific_versioned_model_pricing():
+    """Test versioned GPT-4 Turbo models use Turbo pricing, not GPT-4 pricing."""
+    tracker = CostTracker(CostTrackerConfig(enabled=True))
+
+    config = TealOpenAIConfig(
+        api_key='test-key',
+        enable_guardrails=False,
+        enable_cost_tracking=True,
+        cost_tracker=tracker
+    )
+    client = TealOpenAI(config)
+
+    mock_response = create_mock_response('gpt-4-turbo-2024-04-09', 1000, 1000)
+    with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
+        response = await client.chat.create(
+            model='gpt-4-turbo-2024-04-09',
+            messages=[{'role': 'user', 'content': 'Hello'}]
+        )
+
+        assert response.cost == pytest.approx(0.04)
+        assert response.security is not None
+        assert response.security.cost_record is not None
+        assert response.security.cost_record.model == 'gpt-4-turbo'
 
 
 @pytest.mark.asyncio
@@ -360,4 +414,3 @@ async def test_error_handling():
                 model='gpt-4',
                 messages=[{'role': 'user', 'content': 'Hello'}]
             )
-
