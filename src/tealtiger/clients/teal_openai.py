@@ -367,6 +367,18 @@ class TealOpenAI:
         self.engine = config.engine
         self.guard = config.guard
         self.audit = config.audit
+
+    async def close(self) -> None:
+        """Close the underlying async OpenAI client."""
+        await self.client.close()
+
+    async def __aenter__(self) -> "TealOpenAI":
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, *args: Any) -> None:
+        """Async context manager exit."""
+        await self.close()
     
     @property
     def chat(self) -> ChatCompletions:
