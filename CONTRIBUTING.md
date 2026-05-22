@@ -14,8 +14,8 @@ Thank you for considering contributing to AgentGuard Python SDK!
 
 1. **Fork and clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/agentguard-python.git
-   cd agentguard-python
+   git clone https://github.com/YOUR_USERNAME/tealtiger-python-prod.git
+   cd tealtiger-python-prod
    ```
 
 2. **Create a virtual environment**
@@ -313,14 +313,14 @@ Report violations to: agentguard@proton.me
 ## 🏆 Recognition
 
 Contributors will be:
-- Listed in our [Contributors](https://github.com/agentguard-ai/agentguard-python/graphs/contributors) page
+- Listed in our [Contributors](https://github.com/agentguard-ai/tealtiger-python-prod/graphs/contributors) page
 - Mentioned in release notes for significant contributions
 - Invited to our contributors community
 
 ## 📞 Getting Help
 
-- **Questions?** Open a [Discussion](https://github.com/agentguard-ai/agentguard-python/discussions)
-- **Bug?** Open an [Issue](https://github.com/agentguard-ai/agentguard-python/issues)
+- **Questions?** Open a [Discussion](https://github.com/agentguard-ai/tealtiger-python-prod/discussions)
+- **Bug?** Open an [Issue](https://github.com/agentguard-ai/tealtiger-python-prod/issues)
 - **Security?** Email agentguard@proton.me
 
 ## 📄 License

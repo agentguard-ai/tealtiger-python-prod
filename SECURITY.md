@@ -12,7 +12,7 @@ Instead, please report them via email to:
 
 **Please use GitHub Security Advisories to report vulnerabilities:**
 
-https://github.com/agentguard-ai/tealtiger-python/security/advisories/new
+https://github.com/agentguard-ai/tealtiger-python-prod/security/advisories/new
 
 **Note**: If you get a 404 error, Security Advisories may not be enabled yet. In that case, please:
 1. Open a GitHub issue with the title prefix `[SECURITY]` (do NOT include sensitive details)
@@ -204,8 +204,8 @@ response = await client.chat.completions.create(
 
 ## 📞 Contact
 
-- **Security Issues**: Use [GitHub Security Advisories](https://github.com/agentguard-ai/tealtiger-python/security/advisories/new)
-- **GitHub**: [agentguard-ai/tealtiger-python](https://github.com/agentguard-ai/tealtiger-python)
+- **Security Issues**: Use [GitHub Security Advisories](https://github.com/agentguard-ai/tealtiger-python-prod/security/advisories/new)
+- **GitHub**: [agentguard-ai/tealtiger-python-prod](https://github.com/agentguard-ai/tealtiger-python-prod)
 
 ## 📄 Disclosure Policy
 

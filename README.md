@@ -11,7 +11,7 @@
 
   [![PyPI version](https://badge.fury.io/py/tealtiger.svg)](https://pypi.org/project/tealtiger/)
   [![Python versions](https://img.shields.io/pypi/pyversions/tealtiger.svg)](https://pypi.org/project/tealtiger/)
-  [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
+  [![Tests](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
   [![v1.3.0](https://img.shields.io/badge/version-v1.3.0-teal.svg)](https://pypi.org/project/tealtiger/)

@@ -270,8 +270,8 @@ docker run --rm ghcr.io/tealtiger/python-sdk:latest \
 
 ## Support
 
-- **Documentation:** https://github.com/agentguard-ai/tealtiger-python
-- **Issues:** https://github.com/agentguard-ai/tealtiger-python/issues
+- **Documentation:** https://github.com/agentguard-ai/tealtiger-python-prod
+- **Issues:** https://github.com/agentguard-ai/tealtiger-python-prod/issues
 - **Docker Hub:** https://hub.docker.com/r/tealtiger/python-sdk
 - **GHCR:** https://github.com/orgs/tealtiger/packages
 
