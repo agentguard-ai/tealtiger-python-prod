@@ -340,8 +340,8 @@ class TealOpenAI:
             cost_storage=storage
         ))
         
-        # Use like normal OpenAI client
-        response = await client.chat.completions.create(
+        # Use the canonical guarded OpenAI API
+        response = await client.chat.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Hello!"}]
         )

@@ -58,7 +58,13 @@ pip install tealtiger
 
 ```python
 import asyncio
-from tealtiger import TealOpenAI, GuardrailEngine, PIIDetectionGuardrail, PromptInjectionGuardrail
+from tealtiger import (
+    TealOpenAI,
+    TealOpenAIConfig,
+    GuardrailEngine,
+    PIIDetectionGuardrail,
+    PromptInjectionGuardrail,
+)
 
 async def main():
     # Set up guardrails
@@ -66,23 +72,27 @@ async def main():
     engine.register_guardrail(PIIDetectionGuardrail())
     engine.register_guardrail(PromptInjectionGuardrail())
 
-    # Create guarded client — drop-in replacement for OpenAI
-    client = TealOpenAI(
+    # Create a guarded provider client using the canonical Python client API.
+    config = TealOpenAIConfig(
         api_key="your-openai-key",
         agent_id="my-agent",
-        guardrail_engine=engine
+        guardrail_engine=engine,
+        enable_cost_tracking=False,
     )
+    client = TealOpenAI(config)
 
-    response = await client.chat.completions.create(
+    response = await client.chat.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Hello!"}]
     )
 
-    print(response.choices[0].message.content)
+    print(response.choices[0]["message"]["content"])
     print(f"Guardrails passed: {response.security.guardrail_result.passed}")
 
 asyncio.run(main())
 ```
+
+Provider clients from `tealtiger.clients` are the canonical public API for LLM calls and are also re-exported from `tealtiger`. The `TealTiger` class remains the sidecar/tool-execution client for policy evaluation workflows, not the provider-call API.
 
 ## Async/Await Usage
 
@@ -140,15 +150,15 @@ asyncio.run(main())
 
 95%+ market coverage with 7 LLM providers:
 
-| Provider | Client | Models | Features |
-|----------|--------|--------|----------|
-| **OpenAI** | `TealOpenAI` | GPT-4, GPT-3.5 Turbo | Chat, Completions, Embeddings |
-| **Anthropic** | `TealAnthropic` | Claude 3, Claude 2 | Chat, Streaming |
-| **Google** | `TealGemini` | Gemini Pro, Ultra | Multimodal, Safety Settings |
-| **AWS** | `TealBedrock` | Claude, Titan, Jurassic, Command, Llama | Multi-model, Regional |
-| **Azure** | `TealAzureOpenAI` | GPT-4, GPT-3.5 | Deployment-based, Azure AD |
-| **Mistral** | `TealMistral` | Large, Medium, Small, Mixtral | EU Data Residency, GDPR |
-| **Cohere** | `TealCohere` | Command, Embed | RAG, Citations, Connectors |
+| Provider | Client | Primary method | Models | Features |
+|----------|--------|----------------|--------|----------|
+| **OpenAI** | `TealOpenAI` | `client.chat.create()` | GPT-4, GPT-3.5 Turbo | Chat, Completions, Embeddings |
+| **Anthropic** | `TealAnthropic` | `client.messages.create()` | Claude 3, Claude 2 | Chat, Streaming |
+| **Google** | `TealGemini` | `client.generate_content()` | Gemini Pro, Ultra | Multimodal, Safety Settings |
+| **AWS** | `TealBedrock` | `client.invoke_model()` | Claude, Titan, Jurassic, Command, Llama | Multi-model, Regional |
+| **Azure** | `TealAzureOpenAI` | `client.chat.completions.create()` | GPT-4, GPT-3.5 | Deployment-based, Azure AD |
+| **Mistral** | `TealMistral` | `client.chat()` | Large, Medium, Small, Mixtral | EU Data Residency, GDPR |
+| **Cohere** | `TealCohere` | `client.chat()` / `client.embed()` | Command, Embed | RAG, Citations, Connectors |
 
 ## 🛡️ Key Features
 
@@ -227,7 +237,7 @@ circuit = TealCircuit(
 
 # Wraps provider calls with circuit breaker protection
 response = await circuit.execute(
-    lambda: client.chat.completions.create(model="gpt-4", messages=messages)
+    lambda: client.chat.create(model="gpt-4", messages=messages)
 )
 ```
 
@@ -265,7 +275,7 @@ context = ContextManager.create_context(
 )
 
 # Context propagates through TealEngine, TealAudit, and all providers
-response = await client.chat.completions.create(
+response = await client.chat.create(
     model="gpt-4",
     messages=[{"role": "user", "content": "Hello"}],
     context=context

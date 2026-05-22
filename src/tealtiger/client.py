@@ -1,4 +1,7 @@
-"""TealTiger client for policy evaluation and tool execution."""
+"""Sidecar client for TealTiger policy evaluation and tool execution.
+
+Use provider clients from :mod:`tealtiger.clients` for guarded LLM calls.
+"""
 
 import logging
 import time
@@ -21,7 +24,7 @@ class TealTigerError(Exception):
 
 
 class TealTiger:
-    """Main client for interacting with the TealTiger Security Sidecar Agent."""
+    """Client for interacting with the TealTiger Security Sidecar Agent."""
 
     def __init__(
         self,
