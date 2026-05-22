@@ -6,7 +6,7 @@ These tests validate universal properties that should hold across all inputs.
 
 import pytest
 from hypothesis import given, strategies as st, settings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from tealtiger.cost.budget import BudgetManager, BudgetEnforcementResult
 from tealtiger.cost.storage import InMemoryCostStorage
@@ -59,7 +59,7 @@ async def test_budget_period_calculation(period, limit, cost_amount):
     )
     
     # Create cost records at different times
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     # Record within current period
     record_current = CostRecord(
@@ -151,7 +151,7 @@ async def test_budget_blocking(limit, current_cost, estimated_cost):
             actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
             actual_cost=current_cost,
             breakdown=CostBreakdown(input_cost=current_cost * 0.6, output_cost=current_cost * 0.4),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
         await storage.store(record)
     
@@ -210,7 +210,7 @@ async def test_alert_threshold_generation(limit, threshold, spending_ratio):
             actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
             actual_cost=spending,
             breakdown=CostBreakdown(input_cost=spending * 0.6, output_cost=spending * 0.4),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
         await storage.store(record)
     
@@ -276,7 +276,7 @@ async def test_agent_scoped_budget_isolation(limit, agent1_cost, agent2_cost):
         actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
         actual_cost=agent1_cost,
         breakdown=CostBreakdown(input_cost=agent1_cost * 0.6, output_cost=agent1_cost * 0.4),
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
     await storage.store(record1)
     
@@ -290,7 +290,7 @@ async def test_agent_scoped_budget_isolation(limit, agent1_cost, agent2_cost):
         actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
         actual_cost=agent2_cost,
         breakdown=CostBreakdown(input_cost=agent2_cost * 0.6, output_cost=agent2_cost * 0.4),
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
     await storage.store(record2)
     
@@ -345,7 +345,7 @@ async def test_budget_status_calculation(limit, spending):
             actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
             actual_cost=spending,
             breakdown=CostBreakdown(input_cost=spending * 0.6, output_cost=spending * 0.4),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
         await storage.store(record)
     
@@ -401,7 +401,7 @@ async def test_cost_recording_updates_budget(limit, initial_cost, additional_cos
         actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
         actual_cost=initial_cost,
         breakdown=CostBreakdown(input_cost=initial_cost * 0.6, output_cost=initial_cost * 0.4),
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
     await storage.store(record1)
     
@@ -419,7 +419,7 @@ async def test_cost_recording_updates_budget(limit, initial_cost, additional_cos
         actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
         actual_cost=additional_cost,
         breakdown=CostBreakdown(input_cost=additional_cost * 0.6, output_cost=additional_cost * 0.4),
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat()
     )
     await storage.store(record2)
     await manager.record_cost(record2)

@@ -351,7 +351,6 @@ async def test_output_guardrail_failure():
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Timezone-aware/naive datetime comparison issue in budget.py - pre-existing bug")
 async def test_all_features_enabled():
     """Test chat completion with all features enabled."""
     engine = MagicMock(spec=GuardrailEngine)
