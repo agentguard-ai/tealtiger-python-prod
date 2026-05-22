@@ -4,6 +4,8 @@ from tealtiger.client import TealTiger
 from tealtiger.policy import PolicyBuilder, PolicyTester
 from tealtiger.types import ExecutionResult, SecurityDecision
 from tealtiger.guardrails import (
+    CustomGuardrail,
+    CustomGuardrailCheckResult,
     Guardrail,
     GuardrailResult,
     GuardrailEngine,
@@ -89,6 +91,8 @@ __all__ = [
     # Guardrails
     "Guardrail",
     "GuardrailResult",
+    "CustomGuardrail",
+    "CustomGuardrailCheckResult",
     "GuardrailEngine",
     "GuardrailEngineResult",
     "PIIDetectionGuardrail",
@@ -146,4 +150,3 @@ __all__ = [
     "PolicyTestResult",
     "PolicyTestReport",
 ]
-

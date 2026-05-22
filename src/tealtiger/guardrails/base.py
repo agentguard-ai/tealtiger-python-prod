@@ -2,7 +2,8 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional
+import inspect
+from typing import Any, Awaitable, Callable, Dict, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -28,6 +29,16 @@ class GuardrailResult(BaseModel):
     def get_risk_score(self) -> int:
         """Get risk score."""
         return self.risk_score
+
+
+class CustomGuardrailCheckResult(BaseModel):
+    """Result returned by a function-based custom guardrail."""
+
+    passed: bool = Field(..., description="Whether the custom guardrail passed")
+    reason: Optional[str] = Field(default=None, description="Reason for the decision")
+    action: Optional[str] = Field(default=None, description="Action to take")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    risk_score: Optional[int] = Field(default=None, ge=0, le=100, description="Risk score 0-100")
 
 
 class Guardrail(ABC):
@@ -79,3 +90,72 @@ class Guardrail(ABC):
             "version": self.config.get("version", "1.0.0"),
             "description": self.config.get("description", "No description provided"),
         }
+
+
+CustomGuardrailResponse = Union[
+    CustomGuardrailCheckResult,
+    GuardrailResult,
+    Dict[str, Any],
+]
+
+
+class CustomGuardrail(Guardrail):
+    """Function-based custom guardrail."""
+
+    def __init__(
+        self,
+        name: str,
+        check: Callable[..., Union[CustomGuardrailResponse, Awaitable[CustomGuardrailResponse]]],
+        description: Optional[str] = None,
+        enabled: bool = True,
+    ):
+        """Initialize a custom guardrail.
+
+        Args:
+            name: Guardrail name
+            check: Function that receives input data and optionally context
+            description: Optional description
+            enabled: Whether the guardrail is enabled
+        """
+        super().__init__({
+            "name": name,
+            "description": description or "Custom guardrail",
+            "enabled": enabled,
+        })
+        self.check = check
+
+    async def evaluate(
+        self,
+        input_data: Any,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> GuardrailResult:
+        """Evaluate input with the custom check function."""
+        parameters = inspect.signature(self.check).parameters
+        if len(parameters) >= 2:
+            result = self.check(input_data, context)
+        else:
+            result = self.check(input_data)
+
+        if inspect.isawaitable(result):
+            result = await result
+
+        if isinstance(result, GuardrailResult):
+            return result
+
+        if isinstance(result, CustomGuardrailCheckResult):
+            data = result.model_dump()
+        elif isinstance(result, dict):
+            data = result
+        else:
+            raise ValueError("Custom guardrail must return a dict, CustomGuardrailCheckResult, or GuardrailResult")
+
+        passed = bool(data["passed"])
+        return GuardrailResult(
+            passed=passed,
+            action=data.get("action") or ("allow" if passed else "block"),
+            reason=data.get("reason") or (
+                "Custom guardrail passed" if passed else f"Custom guardrail failed: {self.name}"
+            ),
+            metadata=data.get("metadata") or {},
+            risk_score=data.get("risk_score") if data.get("risk_score") is not None else (0 if passed else 50),
+        )
