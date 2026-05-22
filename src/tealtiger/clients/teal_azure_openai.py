@@ -6,7 +6,6 @@ Drop-in replacement for Azure OpenAI client with integrated security and cost tr
 
 from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
-from openai import AsyncAzureOpenAI
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -14,6 +13,16 @@ from ..cost.budget import BudgetManager, BudgetEnforcementResult
 from ..cost.storage import CostStorage
 from ..cost.types import TokenUsage, CostRecord
 from ..cost.utils import generate_id
+from ._optional import missing_provider_dependency_error
+
+
+def _load_async_azure_openai():
+    try:
+        from openai import AsyncAzureOpenAI
+    except ImportError as exc:
+        raise missing_provider_dependency_error("Azure OpenAI", "azure-openai", "openai") from exc
+
+    return AsyncAzureOpenAI
 
 
 class TealAzureOpenAIConfig(BaseModel):
@@ -219,7 +228,8 @@ class TealAzureOpenAI:
         # Initialize Azure OpenAI client
         # Note: Azure AD token authentication requires azure-identity package
         # For now, we use API key authentication
-        self.client = AsyncAzureOpenAI(
+        async_azure_openai = _load_async_azure_openai()
+        self.client = async_azure_openai(
             api_key=config.api_key,
             azure_endpoint=config.endpoint,
             api_version=config.api_version
@@ -418,4 +428,3 @@ class TealAzureOpenAI:
             if isinstance(e, ValueError):
                 raise
             raise ValueError(f"TealAzureOpenAI error: {str(e)}")
-

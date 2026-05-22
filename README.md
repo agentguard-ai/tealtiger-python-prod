@@ -53,8 +53,24 @@ docker run -p 8080:8080 tealtigeradmin/tealtiger-typescript:1.2    # Any languag
 ## 🚀 Quick Start
 
 ```bash
-pip install tealtiger
+pip install "tealtiger[openai]"
 ```
+
+The base package keeps provider SDKs optional. Install only the provider extra you need:
+
+```bash
+pip install tealtiger                    # Core guardrails, governance, cost tracking
+pip install "tealtiger[openai]"          # TealOpenAI
+pip install "tealtiger[azure-openai]"    # TealAzureOpenAI
+pip install "tealtiger[anthropic]"       # TealAnthropic
+pip install "tealtiger[gemini]"          # TealGemini
+pip install "tealtiger[bedrock]"         # TealBedrock
+pip install "tealtiger[cohere]"          # TealCohere
+pip install "tealtiger[mistral]"         # TealMistral
+pip install "tealtiger[all]"             # All provider SDKs
+```
+
+Gemini provider support depends on `google-generativeai`, which requires Python 3.9+.
 
 ```python
 import asyncio
@@ -140,15 +156,15 @@ asyncio.run(main())
 
 95%+ market coverage with 7 LLM providers:
 
-| Provider | Client | Models | Features |
-|----------|--------|--------|----------|
-| **OpenAI** | `TealOpenAI` | GPT-4, GPT-3.5 Turbo | Chat, Completions, Embeddings |
-| **Anthropic** | `TealAnthropic` | Claude 3, Claude 2 | Chat, Streaming |
-| **Google** | `TealGemini` | Gemini Pro, Ultra | Multimodal, Safety Settings |
-| **AWS** | `TealBedrock` | Claude, Titan, Jurassic, Command, Llama | Multi-model, Regional |
-| **Azure** | `TealAzureOpenAI` | GPT-4, GPT-3.5 | Deployment-based, Azure AD |
-| **Mistral** | `TealMistral` | Large, Medium, Small, Mixtral | EU Data Residency, GDPR |
-| **Cohere** | `TealCohere` | Command, Embed | RAG, Citations, Connectors |
+| Provider | Client | Models | Features | Install extra |
+|----------|--------|--------|----------|---------------|
+| **OpenAI** | `TealOpenAI` | GPT-4, GPT-3.5 Turbo | Chat, Completions, Embeddings | `tealtiger[openai]` |
+| **Anthropic** | `TealAnthropic` | Claude 3, Claude 2 | Chat, Streaming | `tealtiger[anthropic]` |
+| **Google** | `TealGemini` | Gemini Pro, Ultra | Multimodal, Safety Settings | `tealtiger[gemini]` |
+| **AWS** | `TealBedrock` | Claude, Titan, Jurassic, Command, Llama | Multi-model, Regional | `tealtiger[bedrock]` |
+| **Azure** | `TealAzureOpenAI` | GPT-4, GPT-3.5 | Deployment-based, Azure AD | `tealtiger[azure-openai]` |
+| **Mistral** | `TealMistral` | Large, Medium, Small, Mixtral | EU Data Residency, GDPR | `tealtiger[mistral]` |
+| **Cohere** | `TealCohere` | Command, Embed | RAG, Citations, Connectors | `tealtiger[cohere]` |
 
 ## 🛡️ Key Features
 

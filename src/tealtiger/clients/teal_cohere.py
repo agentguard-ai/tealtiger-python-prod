@@ -7,7 +7,6 @@ Supports chat, RAG (Retrieval-Augmented Generation), and embeddings.
 
 from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
-import cohere
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -15,6 +14,16 @@ from ..cost.budget import BudgetManager
 from ..cost.storage import CostStorage
 from ..cost.types import TokenUsage, CostRecord
 from ..cost.utils import generate_id
+from ._optional import missing_provider_dependency_error
+
+
+def _load_cohere():
+    try:
+        import cohere
+    except ImportError as exc:
+        raise missing_provider_dependency_error("Cohere", "cohere", "cohere") from exc
+
+    return cohere
 
 
 class TealCohereConfig(BaseModel):
@@ -121,6 +130,7 @@ class TealCohere:
             config: Configuration for the guarded client
         """
         self.config = config
+        cohere = _load_cohere()
         
         # Create Cohere client
         self.client = cohere.Client(api_key=config.api_key)

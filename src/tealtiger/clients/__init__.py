@@ -3,13 +3,11 @@ TealTiger Guarded Clients
 
 Drop-in replacements for AI provider clients with integrated security and cost tracking.
 
-Clients are lazily imported to avoid requiring all provider SDKs to be installed.
-Only the provider SDK you actually use needs to be installed.
+Provider SDKs are imported only when their guarded client is initialized.
+Only the provider extra you actually use needs to be installed.
 """
 
-from typing import TYPE_CHECKING
-
-# Always available (OpenAI is a required dependency)
+# Core client wrappers are importable without provider SDKs installed.
 from .teal_openai import (
     TealOpenAI,
     TealOpenAIConfig,
