@@ -66,6 +66,22 @@ async def test_basic_chat_completion():
         assert response.cost is None
 
 
+@pytest.mark.asyncio
+async def test_async_context_manager_closes_client():
+    """Test async context manager support for TealOpenAI."""
+    config = TealOpenAIConfig(
+        api_key='test-key',
+        enable_guardrails=False,
+        enable_cost_tracking=False
+    )
+    client = TealOpenAI(config)
+
+    with patch.object(client.client, 'close', new=AsyncMock()) as mock_close:
+        async with client as active_client:
+            assert active_client is client
+
+        mock_close.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 async def test_guardrails_enabled():

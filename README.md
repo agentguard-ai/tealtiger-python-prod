@@ -84,6 +84,58 @@ async def main():
 asyncio.run(main())
 ```
 
+## Async/Await Usage
+
+The Python SDK exposes async methods for provider calls and guardrail execution. Initialize clients inside your async application, then `await` each API call.
+
+```python
+import asyncio
+from tealtiger.clients import TealOpenAI, TealOpenAIConfig
+
+
+async def main():
+    config = TealOpenAIConfig(
+        api_key="your-openai-key",
+        enable_guardrails=True,
+        enable_cost_tracking=False,
+    )
+    client = TealOpenAI(config)
+
+    response = await client.chat.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "Hello!"}],
+    )
+
+    print(response.choices[0]["message"]["content"])
+
+
+asyncio.run(main())
+```
+
+Use an async context manager when you want the SDK to close the underlying async HTTP client automatically.
+
+```python
+import asyncio
+from tealtiger.clients import TealOpenAI, TealOpenAIConfig
+
+
+async def main():
+    config = TealOpenAIConfig(
+        api_key="your-openai-key",
+        enable_guardrails=True,
+    )
+
+    async with TealOpenAI(config) as client:
+        response = await client.chat.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": "Hello!"}],
+        )
+        print(response.choices[0]["message"]["content"])
+
+
+asyncio.run(main())
+```
+
 ## 🌐 Supported Providers
 
 95%+ market coverage with 7 LLM providers:
