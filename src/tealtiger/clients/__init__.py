@@ -3,40 +3,46 @@ TealTiger Guarded Clients
 
 Drop-in replacements for AI provider clients with integrated security and cost tracking.
 
-Clients are lazily imported to avoid requiring all provider SDKs to be installed.
-Only the provider SDK you actually use needs to be installed.
+All provider clients are lazily imported. Only the provider SDK you actually use
+needs to be installed via extras (e.g., pip install tealtiger[openai]).
 """
 
-from typing import TYPE_CHECKING
 
-# Always available (OpenAI is a required dependency)
-from .teal_openai import (
-    TealOpenAI,
-    TealOpenAIConfig,
-    ChatCompletionMessage,
-    ChatCompletionRequest,
-    SecurityMetadata,
-    ChatCompletionResponse,
-)
-
-from .teal_anthropic import (
-    TealAnthropic,
-    TealAnthropicConfig,
-    MessageCreateRequest,
-    MessageCreateResponse,
-)
-
-from .teal_azure_openai import (
-    TealAzureOpenAI,
-    TealAzureOpenAIConfig,
-    AzureChatCompletionMessage,
-    AzureChatCompletionRequest,
-    AzureChatCompletionResponse,
-)
-
-# Lazy imports for optional providers
 def __getattr__(name: str):
-    """Lazy import for optional provider clients."""
+    """Lazy import for all provider clients."""
+    if name in ("TealOpenAI", "TealOpenAIConfig", "ChatCompletionMessage", "ChatCompletionRequest", "SecurityMetadata", "ChatCompletionResponse"):
+        from .teal_openai import TealOpenAI, TealOpenAIConfig, ChatCompletionMessage, ChatCompletionRequest, SecurityMetadata, ChatCompletionResponse
+        _map = {
+            "TealOpenAI": TealOpenAI,
+            "TealOpenAIConfig": TealOpenAIConfig,
+            "ChatCompletionMessage": ChatCompletionMessage,
+            "ChatCompletionRequest": ChatCompletionRequest,
+            "SecurityMetadata": SecurityMetadata,
+            "ChatCompletionResponse": ChatCompletionResponse,
+        }
+        return _map[name]
+
+    if name in ("TealAnthropic", "TealAnthropicConfig", "MessageCreateRequest", "MessageCreateResponse"):
+        from .teal_anthropic import TealAnthropic, TealAnthropicConfig, MessageCreateRequest, MessageCreateResponse
+        _map = {
+            "TealAnthropic": TealAnthropic,
+            "TealAnthropicConfig": TealAnthropicConfig,
+            "MessageCreateRequest": MessageCreateRequest,
+            "MessageCreateResponse": MessageCreateResponse,
+        }
+        return _map[name]
+
+    if name in ("TealAzureOpenAI", "TealAzureOpenAIConfig", "AzureChatCompletionMessage", "AzureChatCompletionRequest", "AzureChatCompletionResponse"):
+        from .teal_azure_openai import TealAzureOpenAI, TealAzureOpenAIConfig, AzureChatCompletionMessage, AzureChatCompletionRequest, AzureChatCompletionResponse
+        _map = {
+            "TealAzureOpenAI": TealAzureOpenAI,
+            "TealAzureOpenAIConfig": TealAzureOpenAIConfig,
+            "AzureChatCompletionMessage": AzureChatCompletionMessage,
+            "AzureChatCompletionRequest": AzureChatCompletionRequest,
+            "AzureChatCompletionResponse": AzureChatCompletionResponse,
+        }
+        return _map[name]
+
     if name in ("TealGemini", "TealGeminiConfig", "GenerateContentRequest", "GenerateContentResponse"):
         from .teal_gemini import TealGemini, TealGeminiConfig, GenerateContentRequest, GenerateContentResponse
         _map = {
@@ -78,7 +84,6 @@ def __getattr__(name: str):
 
 
 __all__ = [
-    # Always available
     'TealOpenAI',
     'TealOpenAIConfig',
     'ChatCompletionMessage',
@@ -94,7 +99,6 @@ __all__ = [
     'AzureChatCompletionMessage',
     'AzureChatCompletionRequest',
     'AzureChatCompletionResponse',
-    # Lazy-loaded
     'TealGemini',
     'TealGeminiConfig',
     'GenerateContentRequest',

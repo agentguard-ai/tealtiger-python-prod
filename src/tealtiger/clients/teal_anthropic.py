@@ -6,7 +6,6 @@ Drop-in replacement for Anthropic client with integrated security and cost track
 
 from typing import Optional, List, Dict, Any, Literal, Union
 from pydantic import BaseModel, Field
-from anthropic import AsyncAnthropic
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -356,6 +355,13 @@ class TealAnthropic:
             config: Configuration for the guarded client
         """
         self.config = config
+        try:
+            from anthropic import AsyncAnthropic
+        except ImportError as exc:
+            raise ImportError(
+                "The 'anthropic' package is required for TealAnthropic. "
+                "Install it with: pip install tealtiger[anthropic]"
+            ) from exc
         self.client = AsyncAnthropic(
             api_key=config.api_key,
             base_url=config.base_url

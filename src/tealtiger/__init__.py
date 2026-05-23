@@ -46,7 +46,7 @@ from tealtiger.cost import (
 from tealtiger.cost.storage import CostStorage, InMemoryCostStorage
 from tealtiger.cost.budget import BudgetManager
 
-# Guarded AI clients
+# Guarded AI clients (lazy-loaded — provider SDKs are optional extras)
 from tealtiger.clients import (
     TealOpenAI,
     TealOpenAIConfig,

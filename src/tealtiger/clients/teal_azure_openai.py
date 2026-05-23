@@ -6,7 +6,6 @@ Drop-in replacement for Azure OpenAI client with integrated security and cost tr
 
 from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
-from openai import AsyncAzureOpenAI
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -215,10 +214,17 @@ class TealAzureOpenAI:
             config: Configuration for the guarded client
         """
         self.config = config
-        
+
         # Initialize Azure OpenAI client
         # Note: Azure AD token authentication requires azure-identity package
         # For now, we use API key authentication
+        try:
+            from openai import AsyncAzureOpenAI
+        except ImportError as exc:
+            raise ImportError(
+                "The 'openai' package is required for TealAzureOpenAI. "
+                "Install it with: pip install tealtiger[openai]"
+            ) from exc
         self.client = AsyncAzureOpenAI(
             api_key=config.api_key,
             azure_endpoint=config.endpoint,

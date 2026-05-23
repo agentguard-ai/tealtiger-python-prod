@@ -37,7 +37,7 @@ TealTiger v1.3 introduces **cryptographically verifiable governance** for autono
 - **12 LLM Providers** — Added DeepSeek, Groq, Together AI, HuggingFace TGI, xAI
 
 ```bash
-pip install tealtiger==1.3.0
+pip install tealtiger[all]==1.3.0
 ```
 - **GovernanceDashboard** — Governance visibility UI
 - **BundleExporter** — Evidence export in SARIF v2.1.0, JUnit XML, and JSON
@@ -46,14 +46,26 @@ pip install tealtiger==1.3.0
 ```bash
 # Three ways to use TealTiger v1.2
 npm install tealtiger                                              # TypeScript
-pip install tealtiger                                              # Python
+pip install "tealtiger[all]"                                       # Python
 docker run -p 8080:8080 tealtigeradmin/tealtiger-typescript:1.2    # Any language
 ```
 
 ## 🚀 Quick Start
 
 ```bash
+# Core package (no provider SDKs)
 pip install tealtiger
+
+# With specific provider(s):
+pip install tealtiger[openai]           # OpenAI / Azure OpenAI
+pip install tealtiger[anthropic]        # Anthropic Claude
+pip install tealtiger[google-genai]     # Google Gemini
+pip install tealtiger[bedrock]          # AWS Bedrock
+pip install tealtiger[cohere]           # Cohere
+pip install tealtiger[mistralai]        # Mistral AI
+
+# All providers:
+pip install tealtiger[all]
 ```
 
 ```python

@@ -7,8 +7,6 @@ Supports chat with European data residency.
 
 from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -111,12 +109,21 @@ class TealMistral:
             config: Configuration for the guarded client
         """
         self.config = config
-        
+
         # Create Mistral client
+        try:
+            from mistralai.client import MistralClient
+            from mistralai.models.chat_completion import ChatMessage
+        except ImportError as exc:
+            raise ImportError(
+                "The 'mistralai' package is required for TealMistral. "
+                "Install it with: pip install tealtiger[mistralai]"
+            ) from exc
+        self._ChatMessage = ChatMessage
         client_kwargs = {'api_key': config.api_key}
         if config.endpoint:
             client_kwargs['endpoint'] = config.endpoint
-        
+
         self.client = MistralClient(**client_kwargs)
         
         self.guardrail_engine = config.guardrail_engine
@@ -203,7 +210,7 @@ class TealMistral:
             
             # 3. Convert messages to Mistral format
             mistral_messages = [
-                ChatMessage(role=msg['role'], content=msg['content'])
+                self._ChatMessage(role=msg['role'], content=msg['content'])
                 for msg in messages
             ]
             

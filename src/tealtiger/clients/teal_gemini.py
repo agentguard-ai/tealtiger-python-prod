@@ -6,7 +6,6 @@ Drop-in replacement for Google Gemini client with integrated security and cost t
 
 from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
-import google.generativeai as genai
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -115,10 +114,17 @@ class TealGemini:
             config: Configuration for the guarded client
         """
         self.config = config
-        
+
         # Configure Gemini API
+        try:
+            import google.generativeai as genai
+        except ImportError as exc:
+            raise ImportError(
+                "The 'google-generativeai' package is required for TealGemini. "
+                "Install it with: pip install tealtiger[google-genai]"
+            ) from exc
         genai.configure(api_key=config.api_key)
-        
+
         # Create model instance
         self.model = genai.GenerativeModel(
             model_name=config.model,

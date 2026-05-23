@@ -6,7 +6,6 @@ Drop-in replacement for OpenAI client with integrated security and cost tracking
 
 from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
-from openai import AsyncOpenAI
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -352,6 +351,13 @@ class TealOpenAI:
             config: Configuration for the guarded client
         """
         self.config = config
+        try:
+            from openai import AsyncOpenAI
+        except ImportError as exc:
+            raise ImportError(
+                "The 'openai' package is required for TealOpenAI. "
+                "Install it with: pip install tealtiger[openai]"
+            ) from exc
         self.client = AsyncOpenAI(
             api_key=config.api_key,
             base_url=config.base_url,
