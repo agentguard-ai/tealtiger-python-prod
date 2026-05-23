@@ -74,7 +74,13 @@ Gemini provider support depends on `google-generativeai`, which requires Python 
 
 ```python
 import asyncio
-from tealtiger import TealOpenAI, GuardrailEngine, PIIDetectionGuardrail, PromptInjectionGuardrail
+from tealtiger import (
+    TealOpenAI,
+    TealOpenAIConfig,
+    GuardrailEngine,
+    PIIDetectionGuardrail,
+    PromptInjectionGuardrail,
+)
 
 async def main():
     # Set up guardrails
@@ -82,23 +88,27 @@ async def main():
     engine.register_guardrail(PIIDetectionGuardrail())
     engine.register_guardrail(PromptInjectionGuardrail())
 
-    # Create guarded client — drop-in replacement for OpenAI
-    client = TealOpenAI(
+    # Create a guarded provider client using the canonical Python client API.
+    config = TealOpenAIConfig(
         api_key="your-openai-key",
         agent_id="my-agent",
-        guardrail_engine=engine
+        guardrail_engine=engine,
+        enable_cost_tracking=False,
     )
+    client = TealOpenAI(config)
 
-    response = await client.chat.completions.create(
+    response = await client.chat.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Hello!"}]
     )
 
-    print(response.choices[0].message.content)
+    print(response.choices[0]["message"]["content"])
     print(f"Guardrails passed: {response.security.guardrail_result.passed}")
 
 asyncio.run(main())
 ```
+
+Provider clients from `tealtiger.clients` are the canonical public API for LLM calls and are also re-exported from `tealtiger`. The `TealTiger` class remains the sidecar/tool-execution client for policy evaluation workflows, not the provider-call API.
 
 ## Async/Await Usage
 
@@ -243,7 +253,7 @@ circuit = TealCircuit(
 
 # Wraps provider calls with circuit breaker protection
 response = await circuit.execute(
-    lambda: client.chat.completions.create(model="gpt-4", messages=messages)
+    lambda: client.chat.create(model="gpt-4", messages=messages)
 )
 ```
 
@@ -281,7 +291,7 @@ context = ContextManager.create_context(
 )
 
 # Context propagates through TealEngine, TealAudit, and all providers
-response = await client.chat.completions.create(
+response = await client.chat.create(
     model="gpt-4",
     messages=[{"role": "user", "content": "Hello"}],
     context=context
