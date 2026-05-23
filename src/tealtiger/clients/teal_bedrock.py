@@ -14,6 +14,7 @@ from ..cost.budget import BudgetManager
 from ..cost.storage import CostStorage
 from ..cost.types import TokenUsage, CostRecord
 from ..cost.utils import generate_id
+from ._optional import missing_provider_dependency_error
 
 
 class TealBedrockConfig(BaseModel):
@@ -68,6 +69,7 @@ class TealBedrock:
             config = TealBedrockConfig(**kwargs)
         self._config = config
         self._client = None
+        self._client_dependency_error: Optional[ImportError] = None
         self._init_client()
 
     def _init_client(self) -> None:
@@ -87,6 +89,9 @@ class TealBedrock:
             self._client = session.client("bedrock-runtime")
         except ImportError:
             self._client = None
+            self._client_dependency_error = missing_provider_dependency_error(
+                "AWS Bedrock", "bedrock", "boto3"
+            )
         except Exception:
             self._client = None
 
@@ -119,6 +124,8 @@ class TealBedrock:
         body = self._build_request_body(model_id, prompt, max_tokens, temperature, **kwargs)
 
         if self._client is None:
+            if self._client_dependency_error is not None:
+                raise self._client_dependency_error
             raise RuntimeError("Bedrock client not initialized. Check AWS credentials and boto3 installation.")
 
         # Invoke model

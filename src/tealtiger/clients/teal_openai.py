@@ -6,7 +6,6 @@ Drop-in replacement for OpenAI client with integrated security and cost tracking
 
 from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
-from openai import AsyncOpenAI
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..guardrails.base import CustomGuardrail
@@ -21,6 +20,16 @@ from ..core.engine.types import Decision
 from ..core.engine.teal_engine import TealEngine
 from ..core.guard.teal_guard import TealGuard
 from ..core.audit.teal_audit import TealAudit
+from ._optional import missing_provider_dependency_error
+
+
+def _load_async_openai():
+    try:
+        from openai import AsyncOpenAI
+    except ImportError as exc:
+        raise missing_provider_dependency_error("OpenAI", "openai", "openai") from exc
+
+    return AsyncOpenAI
 
 
 class TealOpenAIConfig(BaseModel):
@@ -356,7 +365,8 @@ class TealOpenAI:
             config: Configuration for the guarded client
         """
         self.config = config
-        self.client = AsyncOpenAI(
+        async_openai = _load_async_openai()
+        self.client = async_openai(
             api_key=config.api_key,
             base_url=config.base_url,
             organization=config.organization

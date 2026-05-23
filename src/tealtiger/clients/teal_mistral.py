@@ -7,8 +7,6 @@ Supports chat with European data residency.
 
 from typing import Optional, List, Dict, Any, Union
 from pydantic import BaseModel, Field
-from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ChatMessage
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -16,6 +14,25 @@ from ..cost.budget import BudgetManager
 from ..cost.storage import CostStorage
 from ..cost.types import TokenUsage, CostRecord
 from ..cost.utils import generate_id
+from ._optional import missing_provider_dependency_error
+
+
+def _load_mistral_client():
+    try:
+        from mistralai.client import MistralClient
+    except ImportError as exc:
+        raise missing_provider_dependency_error("Mistral", "mistral", "mistralai") from exc
+
+    return MistralClient
+
+
+def _load_mistral_chat_message():
+    try:
+        from mistralai.models.chat_completion import ChatMessage
+    except ImportError as exc:
+        raise missing_provider_dependency_error("Mistral", "mistral", "mistralai") from exc
+
+    return ChatMessage
 
 
 class TealMistralConfig(BaseModel):
@@ -117,7 +134,8 @@ class TealMistral:
         if config.endpoint:
             client_kwargs['endpoint'] = config.endpoint
         
-        self.client = MistralClient(**client_kwargs)
+        mistral_client = _load_mistral_client()
+        self.client = mistral_client(**client_kwargs)
         
         self.guardrail_engine = config.guardrail_engine
         self.cost_tracker = config.cost_tracker
@@ -202,8 +220,9 @@ class TealMistral:
                         )
             
             # 3. Convert messages to Mistral format
+            chat_message = _load_mistral_chat_message()
             mistral_messages = [
-                ChatMessage(role=msg['role'], content=msg['content'])
+                chat_message(role=msg['role'], content=msg['content'])
                 for msg in messages
             ]
             

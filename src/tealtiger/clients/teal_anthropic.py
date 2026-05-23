@@ -6,7 +6,6 @@ Drop-in replacement for Anthropic client with integrated security and cost track
 
 from typing import Optional, List, Dict, Any, Literal, Union
 from pydantic import BaseModel, Field
-from anthropic import AsyncAnthropic
 
 from ..guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from ..cost.tracker import CostTracker
@@ -20,6 +19,16 @@ from ..core.engine.types import Decision
 from ..core.engine.teal_engine import TealEngine
 from ..core.guard.teal_guard import TealGuard
 from ..core.audit.teal_audit import TealAudit
+from ._optional import missing_provider_dependency_error
+
+
+def _load_async_anthropic():
+    try:
+        from anthropic import AsyncAnthropic
+    except ImportError as exc:
+        raise missing_provider_dependency_error("Anthropic", "anthropic", "anthropic") from exc
+
+    return AsyncAnthropic
 
 
 # Type alias for message content
@@ -356,7 +365,8 @@ class TealAnthropic:
             config: Configuration for the guarded client
         """
         self.config = config
-        self.client = AsyncAnthropic(
+        async_anthropic = _load_async_anthropic()
+        self.client = async_anthropic(
             api_key=config.api_key,
             base_url=config.base_url
         )
@@ -396,4 +406,3 @@ class TealAnthropic:
             return '\n'.join(text_parts)
         
         return ''
-
