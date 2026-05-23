@@ -350,6 +350,56 @@ class TestPromptInjectionGuardrail:
         assert len(result.metadata["detections"]) == 0
 
     @pytest.mark.asyncio
+    async def test_ignore_in_code_comment(self):
+        """Test allowing code with 'ignore' in comments."""
+        guardrail = PromptInjectionGuardrail({
+            "action": "block",
+        })
+
+        result = await guardrail.evaluate('// TODO: ignore this code block for now\nconst x = 1;')
+
+        assert result.passed
+
+    @pytest.mark.asyncio
+    async def test_prompt_engineering_documentation(self):
+        """Test allowing technical documentation about prompt engineering."""
+        guardrail = PromptInjectionGuardrail({
+            "action": "block",
+        })
+
+        result = await guardrail.evaluate(
+            "Prompt engineering is the practice of designing effective inputs for large language models."
+        )
+
+        assert result.passed
+
+    @pytest.mark.asyncio
+    async def test_ignore_formatting_context(self):
+        """Test allowing 'ignore' in formatting context."""
+        guardrail = PromptInjectionGuardrail({
+            "action": "block",
+        })
+
+        result = await guardrail.evaluate(
+            "Please ignore the previous formatting and show me the raw text"
+        )
+
+        assert result.passed
+
+    @pytest.mark.asyncio
+    async def test_system_in_non_injection_context(self):
+        """Test allowing 'system' in non-injection context."""
+        guardrail = PromptInjectionGuardrail({
+            "action": "block",
+        })
+
+        result = await guardrail.evaluate(
+            "The solar system consists of the Sun and eight planets"
+        )
+
+        assert result.passed
+
+    @pytest.mark.asyncio
     async def test_allow_legitimate_role_mentions(self):
         """Test allowing legitimate role mentions."""
         guardrail = PromptInjectionGuardrail({
