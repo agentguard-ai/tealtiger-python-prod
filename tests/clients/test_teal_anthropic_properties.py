@@ -265,7 +265,6 @@ async def test_property_30_anthropic_cost_estimation(messages, model, max_tokens
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason="Timezone-aware/naive datetime comparison issue in budget.py - pre-existing bug")
 @settings(max_examples=20, deadline=None)
 @given(
     messages=anthropic_messages(),

@@ -2,7 +2,7 @@
 
 import pytest
 from hypothesis import given, strategies as st, settings, HealthCheck
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tealtiger.cost.storage import InMemoryCostStorage
 from tealtiger.cost.types import CostRecord, TokenUsage, CostBreakdown
 
@@ -28,7 +28,7 @@ def cost_record_strategy(draw, request_id=None, agent_id=None, timestamp=None):
             input_cost=draw(st.floats(min_value=0.0001, max_value=5.0)),
             output_cost=draw(st.floats(min_value=0.0001, max_value=5.0))
         ),
-        timestamp=timestamp or datetime.utcnow().isoformat(),
+        timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
         metadata=None
     )
 

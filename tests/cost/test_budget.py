@@ -5,7 +5,7 @@ These tests validate specific examples and edge cases.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from tealtiger.cost.budget import BudgetManager, BudgetEnforcementResult
 from tealtiger.cost.storage import InMemoryCostStorage
@@ -357,7 +357,7 @@ class TestAlerts:
             actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
             actual_cost=40.0,
             breakdown=CostBreakdown(input_cost=24.0, output_cost=16.0),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
         await storage.store(record)
         
@@ -393,7 +393,7 @@ class TestAlerts:
             actual_tokens=TokenUsage(input_tokens=100, output_tokens=50, total_tokens=150),
             actual_cost=60.0,
             breakdown=CostBreakdown(input_cost=36.0, output_cost=24.0),
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
         await storage.store(record)
         await manager.record_cost(record)
@@ -426,7 +426,7 @@ class TestAlerts:
             limit=100.0,
             message="Test alert",
             severity='info',
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             acknowledged=False
         )
         manager.alerts[budget.id] = [alert]
@@ -470,7 +470,7 @@ class TestAlerts:
             limit=100.0,
             message="Test alert 1",
             severity='info',
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             acknowledged=False
         )
         alert2 = CostAlert(
@@ -481,7 +481,7 @@ class TestAlerts:
             limit=100.0,
             message="Test alert 2",
             severity='warning',
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             acknowledged=False
         )
         manager.alerts[budget.id] = [alert1, alert2]

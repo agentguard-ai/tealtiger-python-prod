@@ -5,7 +5,7 @@ Manages budgets, alerts, and enforcement for cost control.
 """
 
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 from .types import (
@@ -69,7 +69,7 @@ class BudgetManager:
         Returns:
             Created budget configuration
         """
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         budget = BudgetConfig(
             id=generate_id(),
             name=name,
@@ -107,7 +107,7 @@ class BudgetManager:
         
         updated_data = budget.dict()
         updated_data.update(updates)
-        updated_data['updated_at'] = datetime.utcnow().isoformat()
+        updated_data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
         updated_budget = BudgetConfig(**updated_data)
         self.budgets[id] = updated_budget
@@ -285,7 +285,7 @@ class BudgetManager:
             active_alerts=active_alerts,
             period_start=start.isoformat(),
             period_end=end.isoformat(),
-            last_updated=datetime.utcnow().isoformat()
+            last_updated=datetime.now(timezone.utc).isoformat()
         )
     
     def get_alerts(self, budget_id: str) -> List[CostAlert]:
@@ -354,7 +354,7 @@ class BudgetManager:
         Returns:
             Tuple of (start_date, end_date)
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         end = now
         
         if period == 'hourly':
@@ -367,7 +367,7 @@ class BudgetManager:
         elif period == 'monthly':
             start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         else:  # total
-            start = datetime(1970, 1, 1)
+            start = datetime(1970, 1, 1, tzinfo=timezone.utc)
         
         return start, end
     
@@ -402,7 +402,7 @@ class BudgetManager:
             limit=budget.limit,
             message=f'Budget "{budget.name}" has reached {threshold}% ({current_spending:.4f} / {budget.limit} USD)',
             severity=severity,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             acknowledged=False
         )
     

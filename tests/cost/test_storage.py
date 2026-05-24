@@ -1,7 +1,7 @@
 """Unit tests for cost storage."""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tealtiger.cost.storage import InMemoryCostStorage
 from tealtiger.cost.types import CostRecord, TokenUsage, CostBreakdown
 
@@ -33,7 +33,7 @@ async def test_clear_operation():
                 input_cost=0.006 * (i + 1),
                 output_cost=0.004 * (i + 1)
             ),
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             metadata=None
         )
         records.append(record)
