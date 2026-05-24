@@ -66,6 +66,10 @@ from tealtiger.core.engine.types import (
     ModeConfig,
     Decision,
 )
+from tealtiger.core.engine.policy_federation import (
+    PolicyFederation,
+    PolicyFederationVerificationResult,
+)
 from tealtiger.core.context import (
     ExecutionContext,
     ExecutionContextOptions,
@@ -149,4 +153,6 @@ __all__ = [
     "PolicyTestSuite",
     "PolicyTestResult",
     "PolicyTestReport",
+    "PolicyFederation",
+    "PolicyFederationVerificationResult",
 ]
