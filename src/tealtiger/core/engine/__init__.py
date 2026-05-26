@@ -1,6 +1,10 @@
 """Engine components for TealTiger SDK."""
 
 from tealtiger.core.engine.teal_engine import TealEngine
+from tealtiger.core.engine.policy_federation import (
+    PolicyFederation,
+    PolicyFederationVerificationResult,
+)
 from tealtiger.core.engine.types import (
     Decision,
     DecisionAction,
@@ -16,4 +20,6 @@ __all__ = [
     "DecisionAction",
     "ReasonCode",
     "Decision",
+    "PolicyFederation",
+    "PolicyFederationVerificationResult",
 ]

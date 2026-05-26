@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 from ..context.context_manager import ContextManager
 from ..context.execution_context import ExecutionContext
+from .policy_federation import PolicyFederation
 from .types import Decision, DecisionAction, ModeConfig, PolicyMode, ReasonCode
 
 
@@ -200,6 +201,7 @@ class TealEngine:
         cache_ttl: Optional[int] = None,
         cache_enabled: bool = True,
         cache_max_size: int = 1000,
+        federation: Optional[Dict[str, Any]] = None,
     ):
         """Initialize TealEngine.
         
@@ -209,8 +211,17 @@ class TealEngine:
             cache_ttl: Optional cache TTL in milliseconds
             cache_enabled: Whether to enable caching
             cache_max_size: Maximum cache size
+            federation: Optional parent policy constraints or federation payload
         """
-        self.policies = policies
+        self.local_policies = policies
+        self.federation_constraints = (
+            PolicyFederation.extract_constraints(federation) if federation else None
+        )
+        self.policies = (
+            PolicyFederation.merge_policies(self.local_policies, self.federation_constraints)
+            if self.federation_constraints
+            else self.local_policies
+        )
         self.mode_config = mode or ModeConfig(default=PolicyMode.ENFORCE)
         self.cache_ttl = cache_ttl
         self.cache_enabled = cache_enabled
@@ -287,6 +298,8 @@ class TealEngine:
                 metadata["environment"] = exec_context.environment
             if exec_context.agent_purpose:
                 metadata["agent_purpose"] = exec_context.agent_purpose
+            if self.federation_constraints:
+                metadata["federation"] = {"constraints": self.federation_constraints}
             
             decision = Decision(
                 action=DecisionAction.ALLOW,
@@ -351,6 +364,8 @@ class TealEngine:
                 metadata["environment"] = exec_context.environment
             if exec_context.agent_purpose:
                 metadata["agent_purpose"] = exec_context.agent_purpose
+            if self.federation_constraints:
+                metadata["federation"] = {"constraints": self.federation_constraints}
             
             decision = Decision(
                 action=DecisionAction.ALLOW,
@@ -407,6 +422,8 @@ class TealEngine:
                 metadata["environment"] = exec_context.environment
             if exec_context.agent_purpose:
                 metadata["agent_purpose"] = exec_context.agent_purpose
+            if self.federation_constraints:
+                metadata["federation"] = {"constraints": self.federation_constraints}
             
             decision = Decision(
                 action=DecisionAction.ALLOW if eval_result["allowed"] else DecisionAction.DENY,
@@ -457,13 +474,72 @@ class TealEngine:
         Returns:
             Dict with keys: allowed (bool), reason (str), triggered_policies (list)
         """
-        # Simplified policy evaluation - in real implementation, use PolicyEvaluator
-        # For now, just return a basic result
+        tool = context.get("tool")
+        tools = self.policies.get("tools")
+        if tool and isinstance(tools, dict):
+            tool_policy = tools.get(tool) or tools.get("*")
+            if not tool_policy:
+                return {
+                    "allowed": False,
+                    "reason": f"Tool '{tool}' is not defined in policy",
+                    "triggered_policies": [f"tools.{tool}"],
+                }
+
+            if not tool_policy.get("allowed", False):
+                return {
+                    "allowed": False,
+                    "reason": f"Tool '{tool}' is blocked by policy",
+                    "triggered_policies": [f"tools.{tool}"],
+                }
+
+        behavioral = self.policies.get("behavioral")
+        if isinstance(behavioral, dict) and context.get("cost") is not None:
+            daily = (behavioral.get("costLimit") or {}).get("daily")
+            if daily is not None and context["cost"] > daily:
+                return {
+                    "allowed": False,
+                    "reason": f"Estimated cost {context['cost']} exceeds daily limit {daily}",
+                    "triggered_policies": ["behavioral.costLimit.daily"],
+                }
+
+        content = self.policies.get("content")
+        if isinstance(content, dict):
+            requested_classification = (
+                (context.get("metadata") or {}).get("dataClassification")
+                or (context.get("metadata") or {}).get("data_classification")
+                or (context.get("toolParams") or {}).get("dataClassification")
+                or (context.get("toolParams") or {}).get("data_classification")
+            )
+            max_classification = (content.get("dataClassification") or {}).get("maxLevel")
+            if (
+                requested_classification
+                and max_classification
+                and _classification_rank(requested_classification)
+                > _classification_rank(max_classification)
+            ):
+                return {
+                    "allowed": False,
+                    "reason": (
+                        f"Data classification '{requested_classification}' exceeds "
+                        f"maximum '{max_classification}'"
+                    ),
+                    "triggered_policies": ["content.dataClassification"],
+                }
+
         return {
             "allowed": True,
             "reason": None,
             "triggered_policies": [],
         }
+
+    def apply_federated_constraints(self, constraints: Dict[str, Any]) -> None:
+        """Apply updated parent constraints to the child engine.
+
+        Revocations and budget changes take effect on the next evaluation cycle.
+        """
+        next_constraints = PolicyFederation.extract_constraints(constraints)
+        self.federation_constraints = next_constraints
+        self.policies = PolicyFederation.merge_policies(self.local_policies, next_constraints)
     
     def get_mode_config(self) -> ModeConfig:
         """Get the current mode configuration.
@@ -472,3 +548,13 @@ class TealEngine:
             Current ModeConfig
         """
         return self.mode_config
+
+
+def _classification_rank(level: str) -> int:
+    ranks = {
+        "public": 0,
+        "internal": 1,
+        "confidential": 2,
+        "restricted": 3,
+    }
+    return ranks[level]
