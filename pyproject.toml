@@ -55,7 +55,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tealtiger = "tealtiger.cli.test:cli"
+tealtiger = "tealtiger.cli.__main__:cli"
 
 [project.optional-dependencies]
 openai = ["openai>=1.0.0"]
