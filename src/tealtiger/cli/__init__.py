@@ -2,10 +2,25 @@
 
 Provides command-line tools for:
 - Policy testing
+- Policy validation
 - Configuration validation
 - Report generation
 """
 
-from .test import test
+import click
 
-__all__ = ['test']
+from .test import test as test_cmd
+from .validate import validate
+
+
+@click.group()
+def cli():
+    """TealTiger CLI - AI agent security platform."""
+    pass
+
+
+cli.add_command(test_cmd)
+cli.add_command(validate)
+
+if __name__ == "__main__":
+    cli()
