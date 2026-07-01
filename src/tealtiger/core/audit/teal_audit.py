@@ -473,6 +473,68 @@ class TealAudit:
         else:
             raise ValueError(f"TealAudit: Unsupported export format: {format}")
 
+    def to_json(self) -> str:
+        """Export audit events as a simple JSON array for dashboards.
+
+        Outputs a flat JSON array of decision objects with the following fields:
+        - decision_id: correlation_id
+        - timestamp: ISO 8601 timestamp
+        - agent_id: agent identifier
+        - action: allow/deny/monitor
+        - tool_name: event_type (used as tool_name for dashboard compatibility)
+        - reason_codes: list of reason code strings
+        - risk_score: numeric risk score
+        - evaluation_time_ms: duration in milliseconds
+
+        Returns:
+            JSON string representing the array of decisions.
+        """
+        events = self.query()
+        decisions = []
+
+        for event in events:
+            # Map action to dashboard-friendly format
+            action = "monitor"
+            if event.action:
+                action_str = event.action.value if hasattr(event.action, "value") else str(event.action)
+                if action_str == "ALLOW":
+                    action = "allow"
+                elif action_str == "DENY":
+                    action = "deny"
+                else:
+                    action = action_str.lower()
+
+            # Map reason_codes to string list
+            reason_codes = []
+            if event.reason_codes:
+                for rc in event.reason_codes:
+                    if isinstance(rc, str):
+                        reason_codes.append(rc)
+                    else:
+                        reason_codes.append(rc.value if hasattr(rc, "value") else str(rc))
+
+            # Map risk_score to int if possible
+            risk_score = event.risk_score
+            if risk_score is not None:
+                risk_score = int(risk_score)
+
+            # Map duration to evaluation_time_ms
+            evaluation_time_ms = event.duration
+
+            decision = {
+                "decision_id": event.correlation_id,
+                "timestamp": event.timestamp,
+                "agent_id": event.agent_id,
+                "action": action,
+                "tool_name": event.event_type.value if hasattr(event.event_type, "value") else str(event.event_type),
+                "reason_codes": reason_codes,
+                "risk_score": risk_score,
+                "evaluation_time_ms": evaluation_time_ms,
+            }
+            decisions.append(decision)
+
+        return json.dumps(decisions, indent=2, default=str)
+
     def clear(self) -> None:
         """Clear all stored events"""
         self.events = []
