@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-06-15
+
+### Added — observe() Zero-Config Instrumentation
+- **`observe()`** — Single-function wrapper that instruments any supported LLM client with cost tracking, audit logging, behavioral baselines, and PII detection. Zero configuration required.
+- **12-provider support** — Auto-detects OpenAI, Anthropic, Gemini, Bedrock, Azure OpenAI, Cohere, Mistral, DeepSeek, Groq, xAI, Together, and HF-TGI via duck-typing.
+- **`freeze()` / `unfreeze()`** — Instant kill switch that blocks all requests to a specific agent (or all agents with `'*'`).
+- **Behavioral baseline** — Computes P50/P95/P99 percentiles for latency, token counts, cost, and tool call frequency from the first N requests.
+- **PII detection (REPORT_ONLY)** — Scans request/response payloads for email, phone, SSN, and credit card patterns without blocking.
+- **Structured audit logging** — Every request/response/error/tool-call produces a typed event with correlation IDs and HASH redaction.
+- **Sync + async support** — Automatically detects and wraps both sync and async provider methods.
+
 ## [1.2.0] - 2026-05-04
 
 ### Added — Governance Bundle

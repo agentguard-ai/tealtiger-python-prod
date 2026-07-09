@@ -14,40 +14,28 @@
   [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
-  [![v1.3.0](https://img.shields.io/badge/version-v1.3.0-teal.svg)](https://pypi.org/project/tealtiger/)
+  [![v1.4.0](https://img.shields.io/badge/version-v1.4.0-teal.svg)](https://pypi.org/project/tealtiger/)
   [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/X2ePf8QAj)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
 
-## What's New in v1.3.0 — Autonomous Agent Governance
+## What's New in v1.4.0 — Observe Mode (Zero-Config Adoption)
 
-TealTiger v1.3 introduces **cryptographically verifiable governance** for autonomous AI agents with 7 new modules:
+TealTiger v1.4 introduces **`observe()` — one line to instrument any LLM client** with full visibility and an instant kill switch:
 
-- **TealEngineV13** — Pre/post evaluation pipeline with FREEZE rules, automation levels, NHI verification
-- **TealProof** — Cryptographic governance receipts (Merkle trees + RFC 3161 timestamping)
-- **TealFlow** — Declarative YAML governance workflows with org-level inheritance
-- **TealClassifier** — Local ONNX-based ML inference for content classification (≤20ms)
-- **TealDrift** — Behavioral drift detection with statistical baselines
-- **TealState** — Context size governance with provenance metadata
-- **TealTemporal** — Session TTL, cooldown periods, time-of-day restrictions
-- **TealMonitor v2** — Governance-owned cost ceilings, anomaly detection, reasoning-token budgets
-- **OWASP Agentic Top 10 Policy Pack** — Zero-config governance for all 10 ASI risks
-- **Platform Adapters** — AWS Bedrock Agents, AWS AgentCore, Azure AI Agent Service
-- **12 LLM Providers** — Added DeepSeek, Groq, Together AI, HuggingFace TGI, xAI
+- **`observe(client)`** — Zero-config proxy wrapping for any of 12 supported LLM providers
+- **Automatic Cost Tracking** — Per-request, per-session, per-agent cost accumulation across all providers
+- **Behavioral Baseline** — Statistical profiling (P50/P95/P99 latency, token distribution, cost patterns)
+- **PII Detection (REPORT_ONLY)** — Passive PII scanning without blocking — visibility before enforcement
+- **`freeze()` / `unfreeze()`** — Instant kill switch to halt any agent immediately, zero policy required
+- **Structured Audit Trail** — Every call logged with correlation IDs, cost, latency, and governance metadata
+- **Governance Dashboard** — Real-time overview with KPI metrics, defense pipeline, canary alerts, agent matrix
+- **Under 5ms overhead** — All instrumentation is in-process, deterministic, and offline-capable
 
 ```bash
-pip install tealtiger==1.3.0
+pip install tealtiger==1.4.0
 ```
-- **GovernanceDashboard** — Governance visibility UI
-- **BundleExporter** — Evidence export in SARIF v2.1.0, JUnit XML, and JSON
-- **Docker Sidecar** — Language-agnostic governance via `POST /evaluate` over HTTP
-
-```bash
-# Three ways to use TealTiger v1.2
-npm install tealtiger                                              # TypeScript
-pip install tealtiger                                              # Python
-docker run -p 8080:8080 tealtigeradmin/tealtiger-typescript:1.2    # Any language
 ```
 
 ## 🚀 Quick Start

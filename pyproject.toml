@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tealtiger"
-version = "1.3.0"
+version = "1.4.0"
 description = "TealTiger - AI agent security platform with guardrails, cost tracking, and policy management for LLM applications"
 readme = "README.md"
 requires-python = ">=3.8"

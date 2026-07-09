@@ -1,5 +1,9 @@
 """TealTiger Python SDK - Enterprise-grade security for AI agents."""
 
+# v1.4: observe() — Zero-Config Entry Point
+from tealtiger.observe import observe, freeze, unfreeze
+from tealtiger.observe.errors import UnsupportedProviderError, FrozenAgentError
+
 from tealtiger.client import TealTiger
 from tealtiger.policy import PolicyBuilder, PolicyTester
 from tealtiger.types import ExecutionResult, SecurityDecision

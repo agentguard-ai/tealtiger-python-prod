@@ -1,0 +1,138 @@
+{
+  "description": "Cross-SDK test vectors for TEEC v2.1 cryptographic operations. All expected values are computed using the canonical CryptoService implementations and must produce byte-identical results in both TypeScript and Python SDKs.",
+  "version": "2.1",
+  "generated_by": "compute-vectors.mjs",
+  "vectors": [
+    {
+      "id": "basic-payload",
+      "description": "Simple flat payload with two string fields",
+      "inputs": {
+        "request_payload": {
+          "action": "chat.create",
+          "model": "gpt-4"
+        },
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{\"action\":\"chat.create\",\"model\":\"gpt-4\"}",
+        "intent_ref": "d5b3db50d8f47936451f9a2441e8826659af904fbfac4574c9d7dbee8a49c07c",
+        "normalize_payload": "{\"action\":\"chat.create\",\"model\":\"gpt-4\"}",
+        "normalization_id": "d5b3db50d8f47936451f9a2441e8826659af904fbfac4574c9d7dbee8a49c07c",
+        "hmac_input": "{\"action\":\"chat.create\",\"model\":\"gpt-4\"}1700000000000agent-001",
+        "hmac": "aa3751355587ae3857ae285d78811d7a1da4ff7fd9891347042edeb171933d1c"
+      }
+    },
+    {
+      "id": "empty-payload",
+      "description": "Empty object payload — edge case for serialization",
+      "inputs": {
+        "request_payload": {},
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{}",
+        "intent_ref": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "normalize_payload": "{}",
+        "normalization_id": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "hmac_input": "{}1700000000000agent-001",
+        "hmac": "eaded3b0d21792a9d75bd7af8c24ed72cc29a5ab44ddfaddafc5ca946a34890f"
+      }
+    },
+    {
+      "id": "nested-payload",
+      "description": "Nested objects and arrays to verify recursive key sorting",
+      "inputs": {
+        "request_payload": {
+          "config": {
+            "temperature": 0.7,
+            "max_tokens": 100
+          },
+          "messages": [
+            {
+              "role": "user",
+              "content": "Hello"
+            }
+          ]
+        },
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{\"config\":{\"max_tokens\":100,\"temperature\":0.7},\"messages\":[{\"content\":\"Hello\",\"role\":\"user\"}]}",
+        "intent_ref": "0d7901eeef1ed1a65c6b19f69bf28d5cbc034b2c956a87adbd8abe01f60f6c66",
+        "normalize_payload": "{\"config\":{\"max_tokens\":100,\"temperature\":0.7},\"messages\":[{\"content\":\"hello\",\"role\":\"user\"}]}",
+        "normalization_id": "f0cd61387d4f5373564e4449686bcb62e444ea9b25f6bead30e7b06e7f9f35ec",
+        "hmac_input": "{\"config\":{\"max_tokens\":100,\"temperature\":0.7},\"messages\":[{\"content\":\"Hello\",\"role\":\"user\"}]}1700000000000agent-001",
+        "hmac": "3f678283e544cf0cfd5945143017331dc4487be58a08d655eab160f6ca454612"
+      }
+    },
+    {
+      "id": "unicode-payload",
+      "description": "Unicode strings including CJK and emoji characters",
+      "inputs": {
+        "request_payload": {
+          "message": "Hello 世界",
+          "emoji": "🌍"
+        },
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{\"emoji\":\"🌍\",\"message\":\"Hello 世界\"}",
+        "intent_ref": "fa6fd6db11e1b97e2daea7acd4fa8b512338bc3c534cb035bafd909d7cf24117",
+        "normalize_payload": "{\"emoji\":\"🌍\",\"message\":\"hello 世界\"}",
+        "normalization_id": "ce9cbe5b0c7a2a6c415b522939b1e4e6ac896a882735500fdee57f55b6e38a5c",
+        "hmac_input": "{\"emoji\":\"🌍\",\"message\":\"Hello 世界\"}1700000000000agent-001",
+        "hmac": "622aa2b68b50af0b56ed2cb8d882decc16b62f2feb6d8e40d4c931e6dc984e91"
+      }
+    },
+    {
+      "id": "key-ordering-payload",
+      "description": "Keys in reverse order — deterministic serialization must produce same output regardless of insertion order",
+      "inputs": {
+        "request_payload": {
+          "z_field": "last",
+          "a_field": "first"
+        },
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{\"a_field\":\"first\",\"z_field\":\"last\"}",
+        "intent_ref": "a2f9ddace564dd74a7566353d5c705137c61ddf3fda7bddfed4f13c67ac26795",
+        "normalize_payload": "{\"a_field\":\"first\",\"z_field\":\"last\"}",
+        "normalization_id": "a2f9ddace564dd74a7566353d5c705137c61ddf3fda7bddfed4f13c67ac26795",
+        "hmac_input": "{\"a_field\":\"first\",\"z_field\":\"last\"}1700000000000agent-001",
+        "hmac": "50d4cc59388d71f4bc18af014d451e1bcab6b7a4de588aed0874cbb1a56aab59"
+      }
+    },
+    {
+      "id": "normalization-payload",
+      "description": "Payload with mixed casing and whitespace — tests normalization equivalence",
+      "inputs": {
+        "request_payload": {
+          "Name": "  John Doe  ",
+          "Action": "  READ_FILE  "
+        },
+        "seal_secret": "test-secret-key",
+        "agent_id": "agent-001",
+        "timestamp": 1700000000000
+      },
+      "expected": {
+        "deterministic_serialize": "{\"Action\":\"  READ_FILE  \",\"Name\":\"  John Doe  \"}",
+        "intent_ref": "ead874afe241387e321f614f121180a66d4105bd29d5ea46349adddf6730348f",
+        "normalize_payload": "{\"Action\":\"read_file\",\"Name\":\"john doe\"}",
+        "normalization_id": "c943fe751096d619eba7a4290097c537f35b6ca14bfc2df2f28483605ed95830",
+        "hmac_input": "{\"Action\":\"  READ_FILE  \",\"Name\":\"  John Doe  \"}1700000000000agent-001",
+        "hmac": "cf9b725fd3b3cf7033d578f9cf53677e599c44e14015c3bb32e535c7702351c8"
+      }
+    }
+  ]
+}
