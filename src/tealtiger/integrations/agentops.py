@@ -20,7 +20,7 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 try:
     from agentops import ActionEvent, ErrorEvent
@@ -116,7 +116,6 @@ class AgentOpsGovernanceReporter:
     ) -> None:
         """Report an ALLOW/MONITOR/REFER decision as an ActionEvent."""
         action_type = f"governance:{action.lower()}"
-        tool_slug = decision.get("tool_slug", "unknown")
 
         event = ActionEvent(
             action_type=action_type,
@@ -133,7 +132,6 @@ class AgentOpsGovernanceReporter:
     ) -> None:
         """Report a DENY decision as an ErrorEvent."""
         reason = decision.get("reason", "Governance DENY")
-        reason_codes = decision.get("reason_codes", [])
 
         event = ErrorEvent(
             error_type="governance:deny",
