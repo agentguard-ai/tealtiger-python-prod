@@ -19,12 +19,10 @@ Usage:
 
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, Optional
 
 try:
     from langfuse import Langfuse
-    from langfuse.client import StatefulSpanClient, StatefulTraceClient
 except ImportError:
     raise ImportError(
         "langfuse is required for this integration. "
@@ -151,16 +149,6 @@ class LangfuseGovernanceExporter:
 
         # Determine span level
         level = self._action_to_level(action)
-
-        # Calculate timestamps
-        timestamp_ms = decision.get("timestamp_ms")
-        start_time = None
-        end_time = None
-        if timestamp_ms:
-            eval_time_ms = decision.get("evaluation_time_ms", 0)
-            # Start time is timestamp minus evaluation time
-            start_time = (timestamp_ms - eval_time_ms) / 1000.0
-            end_time = timestamp_ms / 1000.0
 
         # Create the span
         span = trace.span(

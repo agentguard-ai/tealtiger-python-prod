@@ -13,7 +13,6 @@ Set environment variables:
     OPENAI_API_KEY=sk-...
 """
 
-import os
 from langfuse import Langfuse
 from tealtiger.integrations.langfuse import LangfuseGovernanceExporter
 
