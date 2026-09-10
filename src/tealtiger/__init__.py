@@ -12,6 +12,19 @@ from tealtiger.clients import (
     TealOpenAI,
     TealOpenAIConfig,
 )
+
+# Core governance engine and components (re-exported at the top level so
+# `from tealtiger import TealEngine` works, matching the docs and README).
+from tealtiger.core import (
+    CircuitOpenError,
+    CircuitState,
+    RedactionLevel,
+    TealAudit,
+    TealAuditConfig,
+    TealCircuit,
+    TealEngine,
+    TealGuard,
+)
 from tealtiger.core.context import (
     ContextManager,
     ExecutionContext,
@@ -83,7 +96,7 @@ from tealtiger.observe.errors import FrozenAgentError, UnsupportedProviderError
 from tealtiger.policy import PolicyBuilder, PolicyTester
 from tealtiger.types import ExecutionResult, SecurityDecision
 
-__version__ = "1.0.0"
+__version__ = "1.4.0"
 __all__ = [
     # Core client
     "TealTiger",
@@ -91,6 +104,15 @@ __all__ = [
     "PolicyTester",
     "ExecutionResult",
     "SecurityDecision",
+    # Core governance engine and components
+    "TealEngine",
+    "TealGuard",
+    "TealAudit",
+    "TealAuditConfig",
+    "TealCircuit",
+    "CircuitState",
+    "CircuitOpenError",
+    "RedactionLevel",
     # Guardrails
     "Guardrail",
     "GuardrailResult",
@@ -150,5 +172,11 @@ __all__ = [
     "PolicyTestSuite",
     "PolicyTestResult",
     "PolicyTestReport",
+    # v1.4: observe() zero-config entry point
+    "observe",
+    "freeze",
+    "unfreeze",
+    "FrozenAgentError",
+    "UnsupportedProviderError",
 ]
 
