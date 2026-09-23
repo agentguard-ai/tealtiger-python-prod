@@ -7,13 +7,20 @@ from tealtiger.guardrails.base import Guardrail, GuardrailResult
 
 
 class PIIDetectionGuardrail(Guardrail):
-    """Detects PII in text: emails, phones, SSNs, credit cards."""
+    """Detects PII in text: emails, phones, SSNs, credit cards.
+
+    Valid ``detect_types`` values: ``email``, ``phone``, ``ssn``,
+    ``credit_card``, ``name``. Default:
+    ``['email', 'phone', 'ssn', 'credit_card']``. Unknown values raise
+    ``ValueError`` on construction.
+    """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize PII detection guardrail.
 
         Args:
-            config: Configuration with detect_types, action, risk_scores
+            config: Configuration with detect_types, action, risk_scores.
+                Unknown ``detect_types`` values raise ValueError.
         """
         config = config or {}
         super().__init__({
@@ -34,6 +41,7 @@ class PIIDetectionGuardrail(Guardrail):
 
         # Configure which PII types to detect
         self.detect_types = config.get("detect_types", ["email", "phone", "ssn", "credit_card"])
+        self._assert_known_detect_types(self.detect_types)
 
         # Configure action: block, redact, mask, allow
         self.action = config.get("action", "block")
@@ -92,6 +100,18 @@ class PIIDetectionGuardrail(Guardrail):
             reason=f"Detected {len(detections)} PII instance(s): {', '.join(d['type'] for d in detections)}",
             metadata=metadata,
             risk_score=max_risk_score,
+        )
+
+    def _assert_known_detect_types(self, types: List[str]) -> None:
+        """Reject unknown detect_types; patterns map is the source of truth."""
+        allowed = list(self.patterns.keys())
+        unknown = [t for t in types if t not in self.patterns]
+        if not unknown:
+            return
+        listed = ", ".join(f"'{t}'" for t in unknown)
+        plural = "detect_type" if len(unknown) == 1 else "detect_types"
+        raise ValueError(
+            f"Unknown PII {plural} {listed}. Valid: {', '.join(allowed)}."
         )
 
     def _extract_text(self, input_data: Any) -> str:
