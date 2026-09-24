@@ -146,6 +146,43 @@ class TestPIIDetectionGuardrail:
         assert result.risk_score > 80  # SSN has highest risk
 
 
+
+    def test_unknown_detect_types_raises(self):
+        """Unknown detect_types values must raise ValueError."""
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown PII detect_type 'creditCard'\. Valid: email, phone, ssn, credit_card, name\.",
+        ):
+            PIIDetectionGuardrail({"detect_types": ["creditCard"]})
+
+    def test_multiple_unknown_detect_types_raises(self):
+        """All unknown detect_types values are listed in the error."""
+        with pytest.raises(
+            ValueError,
+            match=r"Unknown PII detect_types 'creditCard', 'email_address'",
+        ):
+            PIIDetectionGuardrail({"detect_types": ["creditCard", "email_address"]})
+
+    @pytest.mark.asyncio
+    async def test_known_detect_types_including_name(self):
+        """Known detect_types including name continue to work."""
+        guardrail = PIIDetectionGuardrail({
+            "detect_types": ["email", "phone", "ssn", "credit_card", "name"],
+            "action": "block",
+        })
+        result = await guardrail.evaluate("Card: 4532-1234-5678-9010")
+        assert not result.passed
+        assert result.metadata["detections"][0]["type"] == "credit_card"
+
+    @pytest.mark.asyncio
+    async def test_default_detect_types_still_work(self):
+        """Default detect_types set still detects credit cards."""
+        guardrail = PIIDetectionGuardrail({"action": "block"})
+        result = await guardrail.evaluate("Card: 4532-1234-5678-9010")
+        assert not result.passed
+        assert result.metadata["detections"][0]["type"] == "credit_card"
+
+
 class TestContentModerationGuardrail:
     """Tests for Content Moderation Guardrail."""
 
