@@ -4,25 +4,24 @@ Unit tests for TealAnthropic client.
 These tests validate specific examples and edge cases.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+
+import pytest
 
 from tealtiger.clients.teal_anthropic import (
     TealAnthropic,
     TealAnthropicConfig,
-    MessageCreateResponse,
 )
-from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
-from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
 from tealtiger.cost.budget import BudgetManager
 from tealtiger.cost.storage import InMemoryCostStorage
+from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
+from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
 
 
 def create_mock_anthropic_response(
-    model: str, 
-    input_tokens: int, 
-    output_tokens: int, 
+    model: str,
+    input_tokens: int,
+    output_tokens: int,
     content: str = "Test response from Claude"
 ):
     """Create a mock Anthropic response."""
@@ -30,19 +29,19 @@ def create_mock_anthropic_response(
     response.id = 'msg-test123'
     response.type = 'message'
     response.role = 'assistant'
-    
+
     content_block = MagicMock()
     content_block.type = 'text'
     content_block.text = content
     response.content = [content_block]
-    
+
     response.model = model
     response.stop_reason = 'end_turn'
     response.stop_sequence = None
-    
+
     response.usage.input_tokens = input_tokens
     response.usage.output_tokens = output_tokens
-    
+
     return response
 
 
@@ -55,7 +54,7 @@ async def test_basic_message_creation():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -63,7 +62,7 @@ async def test_basic_message_creation():
             max_tokens=1024,
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.id == 'msg-test123'
         assert response.type == 'message'
         assert response.role == 'assistant'
@@ -81,7 +80,7 @@ async def test_string_message_content():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-sonnet-20240229', 30, 15)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -91,7 +90,7 @@ async def test_string_message_content():
                 {'role': 'user', 'content': 'What is the weather?'}
             ]
         )
-        
+
         assert response.id == 'msg-test123'
         assert response.usage['input_tokens'] == 30
         assert response.usage['output_tokens'] == 15
@@ -106,7 +105,7 @@ async def test_array_message_content():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-haiku-20240307', 40, 20)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -121,7 +120,7 @@ async def test_array_message_content():
                 }
             ]
         )
-        
+
         assert response.id == 'msg-test123'
         assert response.model == 'claude-3-haiku-20240307'
 
@@ -135,7 +134,7 @@ async def test_mixed_content_formats():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-2.1', 60, 25)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -152,7 +151,7 @@ async def test_mixed_content_formats():
                 {'role': 'user', 'content': 'Second message as string'}
             ]
         )
-        
+
         assert response.id == 'msg-test123'
 
 
@@ -165,7 +164,7 @@ async def test_text_content_extraction_string():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     # Test string content
     text = "Hello, world!"
     extracted = client._extract_text_content(text)
@@ -181,7 +180,7 @@ async def test_text_content_extraction_array():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     # Test array content with text blocks
     content = [
         {'type': 'text', 'text': 'First part'},
@@ -201,7 +200,7 @@ async def test_text_content_extraction_mixed():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     # Test array with text and non-text blocks
     content = [
         {'type': 'text', 'text': 'Text content'},
@@ -223,7 +222,7 @@ async def test_guardrails_enabled():
         guardrails_executed=1,
         max_risk_score=0
     ))
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -231,7 +230,7 @@ async def test_guardrails_enabled():
         guardrail_engine=engine
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -239,7 +238,7 @@ async def test_guardrails_enabled():
             max_tokens=1024,
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.security is not None
         assert response.security.guardrail_result is not None
         assert response.security.guardrail_result.passed is True
@@ -257,7 +256,7 @@ async def test_guardrails_block_request():
         max_risk_score=90,
         failed_guardrails=['test-guardrail']
     ))
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -265,7 +264,7 @@ async def test_guardrails_block_request():
         guardrail_engine=engine
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
         with pytest.raises(ValueError, match="Guardrail check failed"):
@@ -274,7 +273,7 @@ async def test_guardrails_block_request():
                 max_tokens=1024,
                 messages=[{'role': 'user', 'content': 'Malicious input'}]
             )
-        
+
         # Verify API was not called
         assert not mock_create.called
 
@@ -284,7 +283,7 @@ async def test_cost_tracking_enabled():
     """Test message creation with cost tracking enabled."""
     tracker = CostTracker(CostTrackerConfig(enabled=True))
     storage = InMemoryCostStorage()
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         enable_guardrails=False,
@@ -293,7 +292,7 @@ async def test_cost_tracking_enabled():
         cost_storage=storage
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -301,7 +300,7 @@ async def test_cost_tracking_enabled():
             max_tokens=1024,
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.security is not None
         assert response.security.cost_record is not None
         assert response.security.cost_record.actual_cost > 0
@@ -315,7 +314,7 @@ async def test_budget_enforcement():
     storage = InMemoryCostStorage()
     budget_manager = BudgetManager(storage)
     tracker = CostTracker(CostTrackerConfig(enabled=True))
-    
+
     # Create a very low budget
     budget_manager.create_budget(
         name='test-budget',
@@ -323,7 +322,7 @@ async def test_budget_enforcement():
         period='total',
         alert_thresholds=[50, 75, 90]
     )
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         enable_guardrails=False,
@@ -332,7 +331,7 @@ async def test_budget_enforcement():
         budget_manager=budget_manager
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
         with pytest.raises(ValueError, match="Budget exceeded"):
@@ -341,7 +340,7 @@ async def test_budget_enforcement():
                 max_tokens=1024,
                 messages=[{'role': 'user', 'content': 'Hello'}]
             )
-        
+
         # Verify API was not called
         assert not mock_create.called
 
@@ -350,7 +349,7 @@ async def test_budget_enforcement():
 async def test_output_guardrail_failure():
     """Test that output guardrail failures are caught."""
     call_count = 0
-    
+
     async def mock_execute(text):
         nonlocal call_count
         call_count += 1
@@ -371,10 +370,10 @@ async def test_output_guardrail_failure():
                 max_risk_score=95,
                 failed_guardrails=['output-check']
             )
-    
+
     engine = MagicMock(spec=GuardrailEngine)
     engine.execute = mock_execute
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -382,7 +381,7 @@ async def test_output_guardrail_failure():
         guardrail_engine=engine
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10, content='Unsafe output')
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         with pytest.raises(ValueError, match="Output guardrail check failed"):
@@ -405,18 +404,18 @@ async def test_all_features_enabled():
         guardrails_executed=1,
         max_risk_score=0
     ))
-    
+
     storage = InMemoryCostStorage()
     budget_manager = BudgetManager(storage)
     tracker = CostTracker(CostTrackerConfig(enabled=True))
-    
+
     budget_manager.create_budget(
         name='test-budget',
         limit=100.0,
         period='total',
         alert_thresholds=[50, 75, 90]
     )
-    
+
     config = TealAnthropicConfig(
         api_key='test-key',
         agent_id='test-agent',
@@ -428,7 +427,7 @@ async def test_all_features_enabled():
         cost_storage=storage
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 50, 10)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -436,16 +435,16 @@ async def test_all_features_enabled():
             max_tokens=1024,
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         # Verify all security metadata is present
         assert response.security is not None
         assert response.security.guardrail_result is not None
         assert response.security.cost_record is not None
         assert response.security.budget_check is not None
-        
+
         # Verify cost was stored
         assert storage.size() == 1
-        
+
         # Verify budget was updated
         budget_status = await budget_manager.get_budget_status(budget_manager.get_all_budgets()[0].id)
         assert budget_status.current_spending > 0
@@ -462,7 +461,7 @@ async def test_configuration_options():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     assert client.config.agent_id == 'custom-agent'
     assert client.config.base_url == 'https://custom.anthropic.com'
     assert client.config.enable_guardrails is False
@@ -478,7 +477,7 @@ async def test_system_message():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-opus-20240229', 70, 15)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -487,7 +486,7 @@ async def test_system_message():
             system='You are a helpful assistant.',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.id == 'msg-test123'
 
 
@@ -500,7 +499,7 @@ async def test_multiple_messages():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     mock_response = create_mock_anthropic_response('claude-3-sonnet-20240229', 100, 30)
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.messages.create(
@@ -512,7 +511,7 @@ async def test_multiple_messages():
                 {'role': 'user', 'content': 'How are you?'}
             ]
         )
-        
+
         assert response.id == 'msg-test123'
         assert response.usage['input_tokens'] == 100
         assert response.usage['output_tokens'] == 30
@@ -527,7 +526,7 @@ async def test_error_handling():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     # Mock API call that raises an error
     with patch.object(client.client.messages, 'create', new=AsyncMock(side_effect=Exception("API Error"))):
         with pytest.raises(ValueError, match="TealAnthropic error"):
@@ -547,31 +546,31 @@ async def test_stop_reason_max_tokens():
         enable_cost_tracking=False
     )
     client = TealAnthropic(config)
-    
+
     # Create response with max_tokens stop reason
     response_obj = MagicMock()
     response_obj.id = 'msg-test456'
     response_obj.type = 'message'
     response_obj.role = 'assistant'
-    
+
     content_block = MagicMock()
     content_block.type = 'text'
     content_block.text = 'Truncated response...'
     response_obj.content = [content_block]
-    
+
     response_obj.model = 'claude-3-haiku-20240307'
     response_obj.stop_reason = 'max_tokens'
     response_obj.stop_sequence = None
     response_obj.usage.input_tokens = 20
     response_obj.usage.output_tokens = 100
-    
+
     with patch.object(client.client.messages, 'create', new=AsyncMock(return_value=response_obj)):
         response = await client.messages.create(
             model='claude-3-haiku-20240307',
             max_tokens=100,
             messages=[{'role': 'user', 'content': 'Write a long story'}]
         )
-        
+
         assert response.stop_reason == 'max_tokens'
         assert response.usage['output_tokens'] == 100
 

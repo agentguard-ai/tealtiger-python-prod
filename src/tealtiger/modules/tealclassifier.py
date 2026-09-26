@@ -243,7 +243,7 @@ class TealClassifierModule:
 
     def off(self, listener: Callable[[ClassifierEvent], None]) -> None:
         """Remove an event listener."""
-        self._listeners = [l for l in self._listeners if l is not listener]
+        self._listeners = [cb for cb in self._listeners if cb is not listener]
 
     # ── Private helpers ──────────────────────────────────────────
 

@@ -10,29 +10,25 @@ Requirements: 12.1, 12.4, 12.5
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 from typing import List
 
 import pytest
 
-from tealtiger.modules.tealproof import (
-    SHA256MerkleTree,
-    GovernanceReceipt,
-    TealProofModule,
-    INITIAL_PREVIOUS_HASH,
-    _sha256,
-)
 from tealtiger.modules.tealflow import (
     FlowContext,
-    FlowResult,
     TealFlowEngine,
     TealFlowParser,
     TealFlowWorkflow,
-    ValidationResult,
     evaluate_expression,
 )
-
+from tealtiger.modules.tealproof import (
+    INITIAL_PREVIOUS_HASH,
+    GovernanceReceipt,
+    SHA256MerkleTree,
+    TealProofModule,
+    _sha256,
+)
 
 # ══════════════════════════════════════════════════════════════════
 # SHA256MerkleTree Tests

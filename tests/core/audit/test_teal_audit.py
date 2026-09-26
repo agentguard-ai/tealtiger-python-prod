@@ -3,9 +3,10 @@ Unit tests for TealAudit class
 Tests audit logging, context propagation, and querying
 """
 
-import pytest
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+
+import pytest
 
 from tealtiger.core.audit import (
     AuditConfig,

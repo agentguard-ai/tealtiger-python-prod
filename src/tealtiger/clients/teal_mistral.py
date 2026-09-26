@@ -62,29 +62,29 @@ class ChatResponse(BaseModel):
 class TealMistral:
     """
     TealMistral client - drop-in replacement for Mistral AI with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for Mistral AI API calls with European data residency.
-    
+
     Key Features:
     - Chat with conversation history
     - European data residency (Paris, France)
     - OpenAI-compatible API
     - Streaming support
     - Multiple model sizes (small, medium, large, mixtral)
-    
+
     Example:
         ```python
         from tealtiger import TealMistral, TealMistralConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealMistral(TealMistralConfig(
             api_key="your-api-key",
@@ -95,7 +95,7 @@ class TealMistral:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal Mistral client
         response = await client.chat(
             messages=[{"role": "user", "content": "Hello!"}],
@@ -107,7 +107,7 @@ class TealMistral:
     def __init__(self, config: TealMistralConfig):
         """
         Initialize TealMistral client.
-        
+
         Args:
             config: Configuration for the guarded client
         """
@@ -132,9 +132,9 @@ class TealMistral:
     ) -> ChatResponse:
         """
         Chat with Mistral AI with security and cost tracking.
-        
+
         Supports conversation history and streaming responses.
-        
+
         Args:
             messages: List of messages
                      Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
@@ -145,10 +145,10 @@ class TealMistral:
                 - stream: Boolean for streaming responses
                 - safe_mode: Boolean for safe mode (content filtering)
                 - random_seed: Random seed for reproducibility
-            
+
         Returns:
             ChatResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """

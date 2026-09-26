@@ -13,9 +13,9 @@ import pytest
 from tealtiger.core.engine.v2_1 import (
     GovernanceEngineV21,
     GovernanceEngineV21Options,
+    ValidationContext,
     validate_governance_decision,
     verify_contiguity,
-    ValidationContext,
 )
 
 SEAL_SECRET = "integration-test-secret-key"

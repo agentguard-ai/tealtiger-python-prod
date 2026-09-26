@@ -18,7 +18,7 @@ from .types import GuardrailResult
 
 def get_component_versions_with_guard() -> Dict[str, str]:
     """Get component versions including guard.
-    
+
     Returns:
         Dict with component versions
     """
@@ -40,11 +40,11 @@ def determine_reason_codes_from_guardrails(
     policy_decision: Optional[Decision] = None,
 ) -> List[ReasonCode]:
     """Determine reason codes from guardrail results.
-    
+
     Args:
         guardrail_results: List of guardrail execution results
         policy_decision: Optional policy decision
-        
+
     Returns:
         List of ReasonCode values
     """
@@ -92,11 +92,11 @@ def calculate_risk_score_from_guardrails(
     policy_decision: Optional[Decision] = None,
 ) -> int:
     """Calculate risk score from guardrail results.
-    
+
     Args:
         guardrail_results: List of guardrail execution results
         policy_decision: Optional policy decision
-        
+
     Returns:
         Risk score (0-100)
     """
@@ -135,12 +135,12 @@ def build_reason_from_guardrails(
     policy_decision: Optional[Decision] = None,
 ) -> str:
     """Build human-readable reason from guardrail results.
-    
+
     Args:
         passed: Whether all checks passed
         guardrail_results: List of guardrail execution results
         policy_decision: Optional policy decision
-        
+
     Returns:
         Human-readable reason string
     """
@@ -159,17 +159,17 @@ def build_reason_from_guardrails(
 
 class TealGuard:
     """TealGuard - Enhanced guardrails system with Decision contract.
-    
+
     Integrates guardrail execution with policy evaluation and returns Decision objects
     for consistency with TealEngine and TealCircuit.
-    
+
     Example:
         >>> from tealtiger.core.guard import TealGuard
         >>> from tealtiger.core.context import ContextManager
-        >>> 
+        >>>
         >>> guard = TealGuard()
         >>> context = ContextManager.create_context()
-        >>> 
+        >>>
         >>> decision = await guard.check("Hello world", context)
         >>> print(f"Action: {decision.action}")
         >>> print(f"Risk Score: {decision.risk_score}")
@@ -185,7 +185,7 @@ class TealGuard:
         cache_max_size: int = 1000,
     ):
         """Initialize TealGuard.
-        
+
         Args:
             engine: Optional TealEngine instance for policy evaluation
             policy: Optional policy configuration (if engine not provided)
@@ -211,13 +211,13 @@ class TealGuard:
         context: Optional[ExecutionContext] = None,
     ) -> Decision:
         """Check input against all guardrails and policies.
-        
+
         Returns a Decision object with the same structure as TealEngine for consistency.
-        
+
         Args:
             input_data: Input to check
             context: Optional ExecutionContext with correlation_id
-            
+
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
@@ -271,11 +271,11 @@ class TealGuard:
         context: ExecutionContext,
     ) -> List[GuardrailResult]:
         """Execute guardrails (simplified implementation).
-        
+
         Args:
             input_data: Input to check
             context: ExecutionContext
-            
+
         Returns:
             List of GuardrailResult objects
         """
@@ -292,14 +292,14 @@ class TealGuard:
         execution_time: int,
     ) -> Decision:
         """Build Decision object from guardrail and policy results.
-        
+
         Args:
             passed: Whether all checks passed
             guardrail_results: List of guardrail execution results
             policy_decision: Optional policy decision
             execution_context: ExecutionContext
             execution_time: Execution time in milliseconds
-            
+
         Returns:
             Decision object
         """

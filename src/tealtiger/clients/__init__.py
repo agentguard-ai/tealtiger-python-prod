@@ -7,8 +7,6 @@ Clients are lazily imported to avoid requiring all provider SDKs to be installed
 Only the provider SDK you actually use needs to be installed.
 """
 
-from typing import TYPE_CHECKING
-
 from .teal_anthropic import (
     MessageCreateRequest,
     MessageCreateResponse,

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 class GuardrailResult(BaseModel):
     """Result from a single guardrail execution.
-    
+
     Attributes:
         name: Guardrail name
         passed: Whether the guardrail check passed

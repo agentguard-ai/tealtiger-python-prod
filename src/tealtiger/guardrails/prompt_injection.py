@@ -19,7 +19,7 @@ from tealtiger.guardrails.base import Guardrail, GuardrailResult
 
 class ConjunctionPattern:
     """Requires BOTH signal A and signal B to co-occur to trigger detection.
-    
+
     This prevents false positives on legitimate messages like
     'please ignore my previous email' or 'how do I switch to dark mode'.
     """
@@ -31,7 +31,7 @@ class ConjunctionPattern:
 
     def match(self, text: str) -> Optional[Tuple[str, str]]:
         """Check if both signals co-occur in text.
-        
+
         Returns:
             Tuple of (match_a, match_b) if both found, None otherwise
         """

@@ -43,7 +43,7 @@ class ExpectedDecision(BaseModel):
 
 class PolicyTestCase(BaseModel):
     """Test case for policy testing.
-    
+
     Defines input context and expected decision outcome.
     """
 
@@ -75,7 +75,7 @@ class PolicyTestCase(BaseModel):
 
 class PolicyTestSuite(BaseModel):
     """Test suite containing multiple test cases.
-    
+
     Includes policy configuration and mode settings.
     """
 

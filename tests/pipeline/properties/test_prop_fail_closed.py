@@ -10,7 +10,6 @@ a module failure NEVER results in silent pass-through.
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Dict, List
 
 import pytest
@@ -19,7 +18,6 @@ from hypothesis import strategies as st
 
 from tealtiger.pipeline.stage_evaluator import StageEvaluator
 from tealtiger.pipeline.types import ACTION_SEVERITY, PipelineStage
-
 
 # ---------------------------------------------------------------------------
 # Helpers: Mock modules that throw or succeed

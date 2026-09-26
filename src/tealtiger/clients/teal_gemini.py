@@ -73,22 +73,22 @@ class GenerateContentResponse(BaseModel):
 class TealGemini:
     """
     TealGemini client - drop-in replacement for Google Gemini with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for Google Gemini API calls.
-    
+
     Example:
         ```python
         from tealtiger import TealGemini, TealGeminiConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealGemini(TealGeminiConfig(
             api_key="your-api-key",
@@ -99,7 +99,7 @@ class TealGemini:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal Gemini client
         response = await client.generate_content(
             contents=[{"role": "user", "parts": [{"text": "Hello!"}]}]
@@ -110,7 +110,7 @@ class TealGemini:
     def __init__(self, config: TealGeminiConfig):
         """
         Initialize TealGemini client.
-        
+
         Args:
             config: Configuration for the guarded client
         """
@@ -138,10 +138,10 @@ class TealGemini:
     ) -> GenerateContentResponse:
         """
         Generate content with security and cost tracking.
-        
+
         Supports multimodal inputs (text + images), streaming, safety settings,
         and generation configuration.
-        
+
         Args:
             contents: Content to generate from (string or structured content)
                      For multimodal: [{"role": "user", "parts": [{"text": "..."}, {"inline_data": {...}}]}]
@@ -149,10 +149,10 @@ class TealGemini:
                 - generation_config: Dict with temperature, top_p, top_k, max_output_tokens
                 - safety_settings: List of safety setting dicts
                 - stream: Boolean for streaming responses
-            
+
         Returns:
             GenerateContentResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -325,10 +325,10 @@ class TealGemini:
     def _extract_text_content(self, contents: List[Dict[str, Any]]) -> str:
         """
         Extract text content from structured content.
-        
+
         Args:
             contents: Structured content list
-            
+
         Returns:
             Extracted text content
         """
@@ -348,10 +348,10 @@ class TealGemini:
     def _is_multimodal_content(self, contents: List[Dict[str, Any]]) -> bool:
         """
         Check if content includes multimodal data (images, etc.).
-        
+
         Args:
             contents: Structured content list
-            
+
         Returns:
             True if multimodal content is present
         """

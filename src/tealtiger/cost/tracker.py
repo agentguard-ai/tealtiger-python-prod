@@ -37,7 +37,7 @@ class CostTrackerConfig(BaseModel):
 class CostTracker:
     """
     Core component for calculating and tracking AI model costs.
-    
+
     Supports:
     - Pre-execution cost estimation
     - Post-execution actual cost calculation
@@ -49,7 +49,7 @@ class CostTracker:
     def __init__(self, config: Optional[CostTrackerConfig] = None):
         """
         Initialize CostTracker.
-        
+
         Args:
             config: Optional configuration
         """
@@ -67,12 +67,12 @@ class CostTracker:
     ) -> CostEstimate:
         """
         Estimate cost before API call.
-        
+
         Args:
             model: Model identifier
             estimated_tokens: Estimated token usage
             provider: Optional provider override
-            
+
         Returns:
             Cost estimate with breakdown
         """
@@ -115,7 +115,7 @@ class CostTracker:
     ) -> CostRecord:
         """
         Calculate actual cost after API call.
-        
+
         Args:
             request_id: Unique request identifier
             agent_id: Agent identifier
@@ -123,7 +123,7 @@ class CostTracker:
             actual_tokens: Actual token usage from API response
             provider: Optional provider override
             metadata: Optional metadata to attach to record
-            
+
         Returns:
             Cost record with actual costs
         """
@@ -166,7 +166,7 @@ class CostTracker:
     def add_custom_pricing(self, model: str, pricing: ModelPricing) -> None:
         """
         Add custom pricing for a model.
-        
+
         Args:
             model: Model identifier
             pricing: Custom pricing information
@@ -176,7 +176,7 @@ class CostTracker:
     def remove_custom_pricing(self, model: str) -> None:
         """
         Remove custom pricing for a model.
-        
+
         Args:
             model: Model identifier
         """
@@ -185,10 +185,10 @@ class CostTracker:
     def get_pricing(self, model: str) -> Optional[ModelPricing]:
         """
         Get pricing for a model (custom or default).
-        
+
         Args:
             model: Model identifier
-            
+
         Returns:
             Model pricing or None if not found
         """
@@ -201,11 +201,11 @@ class CostTracker:
     ) -> Optional[ModelPricing]:
         """
         Internal method to get pricing.
-        
+
         Args:
             model: Model identifier
             provider: Optional provider override
-            
+
         Returns:
             Model pricing or None if not found
         """
@@ -223,11 +223,11 @@ class CostTracker:
     ) -> CostBreakdown:
         """
         Calculate cost breakdown.
-        
+
         Args:
             pricing: Model pricing information
             tokens: Token usage
-            
+
         Returns:
             Cost breakdown by component
         """
@@ -257,12 +257,12 @@ class CostTracker:
     ) -> CostEstimate:
         """
         Create zero-cost estimate.
-        
+
         Args:
             model: Model identifier
             provider: Provider name
             tokens: Token usage
-            
+
         Returns:
             Zero-cost estimate
         """
@@ -285,14 +285,14 @@ class CostTracker:
     ) -> CostRecord:
         """
         Create zero-cost record.
-        
+
         Args:
             request_id: Request identifier
             agent_id: Agent identifier
             model: Model identifier
             provider: Provider name
             tokens: Token usage
-            
+
         Returns:
             Zero-cost record
         """

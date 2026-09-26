@@ -3,21 +3,22 @@ Unit tests for TealAudit types module
 Tests versioned AuditEvent schema and validation
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from tealtiger.core.audit.types import (
     AUDIT_SCHEMA_VERSION,
-    AuditEventType,
-    SafeContent,
     AuditComponentVersions,
-    CostMetadata,
     AuditEvent,
+    AuditEventType,
+    CostMetadata,
+    SafeContent,
+    create_audit_event,
     is_valid_audit_event_type,
     validate_audit_event,
-    create_audit_event,
 )
-from tealtiger.core.engine.types import PolicyMode, DecisionAction, ReasonCode
+from tealtiger.core.engine.types import DecisionAction, PolicyMode, ReasonCode
 
 
 class TestAuditEventType:

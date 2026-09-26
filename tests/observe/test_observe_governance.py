@@ -7,19 +7,17 @@ governance=False preserves Phase 1 behavior, and error cases are handled.
 Requirements: 8.1, 8.3, 8.4, 8.7
 """
 
-import sys
 import os
-from unittest.mock import patch, MagicMock
+import sys
+from unittest.mock import MagicMock, patch
 
 # Ensure the src directory is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 import pytest
 
-from tealtiger.observe import observe, SealConfigurationError
-from tealtiger.observe.types import ProviderSignature, ToolCallInfo
-from tealtiger.core.engine.v2_1.types import DecisionV21
-
+from tealtiger.observe import SealConfigurationError, observe
+from tealtiger.observe.types import ProviderSignature
 
 # ---------------------------------------------------------------------------
 # Mock Infrastructure

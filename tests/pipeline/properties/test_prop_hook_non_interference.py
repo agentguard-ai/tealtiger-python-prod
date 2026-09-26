@@ -12,10 +12,10 @@ pipeline behavior.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pytest
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from tealtiger.pipeline.defense_pipeline import DefensePipeline
@@ -23,9 +23,7 @@ from tealtiger.pipeline.types import (
     PipelineConfig,
     PipelineHooks,
     PipelineRequest,
-    PipelineStage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers: Mock modules and provider
@@ -224,7 +222,7 @@ class TestHookNonInterference:
         )
 
         # Both should be denied
-        assert result_no_hooks.allowed == result_with_hooks.allowed == False
+        assert result_no_hooks.allowed == result_with_hooks.allowed is False
         assert result_no_hooks.pre_decision.action == result_with_hooks.pre_decision.action
         assert result_no_hooks.blocked_stage == result_with_hooks.blocked_stage
 
@@ -266,5 +264,5 @@ class TestHookNonInterference:
         )
 
         # Both should be denied at post stage
-        assert result_no_hooks.allowed == result_with_hooks.allowed == False
+        assert result_no_hooks.allowed == result_with_hooks.allowed is False
         assert result_no_hooks.remediation_action == result_with_hooks.remediation_action

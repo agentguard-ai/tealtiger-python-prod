@@ -17,7 +17,7 @@ from .types import Decision, DecisionAction, ModeConfig, PolicyMode, ReasonCode
 
 def get_package_version() -> str:
     """Get the TealTiger package version.
-    
+
     Returns:
         Package version string
     """
@@ -29,7 +29,7 @@ def get_package_version() -> str:
 
 def get_component_versions() -> Dict[str, str]:
     """Get component versions for Decision objects.
-    
+
     Returns:
         Dict with component versions
     """
@@ -46,14 +46,14 @@ def resolve_policy_mode(
     environment: Optional[str] = None,
 ) -> PolicyMode:
     """Resolve the effective policy mode using hierarchical resolution.
-    
+
     Priority: policy-specific > environment-specific > global default
-    
+
     Args:
         policy_id: Policy identifier
         mode_config: Mode configuration
         environment: Optional environment name
-        
+
     Returns:
         Resolved PolicyMode
     """
@@ -71,11 +71,11 @@ def resolve_policy_mode(
 
 def calculate_risk_score(allowed: bool, triggered_policies: List[str]) -> int:
     """Calculate risk score based on policy evaluation result.
-    
+
     Args:
         allowed: Whether the request was allowed
         triggered_policies: List of triggered policy IDs
-        
+
     Returns:
         Risk score (0-100)
     """
@@ -107,12 +107,12 @@ def calculate_risk_score(allowed: bool, triggered_policies: List[str]) -> int:
 
 def determine_reason_codes(allowed: bool, triggered_policies: List[str], reason: Optional[str] = None) -> List[ReasonCode]:
     """Determine reason codes from policy evaluation result.
-    
+
     Args:
         allowed: Whether the request was allowed
         triggered_policies: List of triggered policy IDs
         reason: Optional reason string
-        
+
     Returns:
         List of ReasonCode values
     """
@@ -149,10 +149,10 @@ def determine_reason_codes(allowed: bool, triggered_policies: List[str], reason:
 
 def get_policy_id_from_context(context: Dict[str, Any]) -> str:
     """Extract policy ID from request context.
-    
+
     Args:
         context: Request context dict
-        
+
     Returns:
         Policy ID string
     """
@@ -169,26 +169,26 @@ def get_policy_id_from_context(context: Dict[str, Any]) -> str:
 
 class TealEngine:
     """TealEngine - Core policy evaluation engine.
-    
+
     Provides policy evaluation with mode-specific behavior and Decision contract.
-    
+
     Example:
         >>> from tealtiger.core.engine import TealEngine, ModeConfig, PolicyMode
         >>> from tealtiger.core.context import ContextManager
-        >>> 
+        >>>
         >>> # Create engine with MONITOR mode
         >>> engine = TealEngine(
         ...     policies={},
         ...     mode=ModeConfig(default=PolicyMode.MONITOR)
         ... )
-        >>> 
+        >>>
         >>> # Evaluate request
         >>> context = ContextManager.create_context()
         >>> decision = engine.evaluate_with_mode(
         ...     {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
         ...     context
         ... )
-        >>> 
+        >>>
         >>> print(f"Action: {decision.action}")
         >>> print(f"Risk Score: {decision.risk_score}")
     """
@@ -202,7 +202,7 @@ class TealEngine:
         cache_max_size: int = 1000,
     ):
         """Initialize TealEngine.
-        
+
         Args:
             policies: Policy configuration dict
             mode: Optional mode configuration (defaults to ENFORCE)
@@ -222,7 +222,7 @@ class TealEngine:
 
     def _validate_mode_config(self) -> None:
         """Validate mode configuration.
-        
+
         Raises:
             ValueError: If mode configuration is invalid
         """
@@ -246,11 +246,11 @@ class TealEngine:
         execution_context: Optional[ExecutionContext] = None,
     ) -> Decision:
         """Evaluate a request with mode-specific behavior and return a Decision object.
-        
+
         Args:
             context: Request context dict with keys like agentId, action, tool, etc.
             execution_context: Optional ExecutionContext for tracing
-            
+
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
@@ -450,10 +450,10 @@ class TealEngine:
 
     def _evaluate_policies(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Evaluate policies against request context (simplified implementation).
-        
+
         Args:
             context: Request context dict
-            
+
         Returns:
             Dict with keys: allowed (bool), reason (str), triggered_policies (list)
         """
@@ -467,7 +467,7 @@ class TealEngine:
 
     def get_mode_config(self) -> ModeConfig:
         """Get the current mode configuration.
-        
+
         Returns:
             Current ModeConfig
         """

@@ -95,14 +95,14 @@ class Messages:
     async def create(self, **kwargs) -> MessageCreateResponse:
         """
         Create a message with security and cost tracking.
-        
+
         Args:
             **kwargs: Message creation parameters (model, messages, max_tokens, etc.)
                      context: Optional[ExecutionContext] - Execution context for tracing
-            
+
         Returns:
             MessageCreateResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -312,22 +312,22 @@ class Messages:
 class TealAnthropic:
     """
     TealAnthropic client - drop-in replacement for Anthropic with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for Anthropic API calls.
-    
+
     Example:
         ```python
         from tealtiger import TealAnthropic, TealAnthropicConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealAnthropic(TealAnthropicConfig(
             api_key="your-api-key",
@@ -337,7 +337,7 @@ class TealAnthropic:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal Anthropic client
         response = await client.messages.create(
             model="claude-3-opus-20240229",
@@ -350,7 +350,7 @@ class TealAnthropic:
     def __init__(self, config: TealAnthropicConfig):
         """
         Initialize TealAnthropic client.
-        
+
         Args:
             config: Configuration for the guarded client
         """
@@ -376,10 +376,10 @@ class TealAnthropic:
     def _extract_text_content(self, content: MessageContent) -> str:
         """
         Extract text content from message content (handles both string and array formats).
-        
+
         Args:
             content: Message content (string or array of content blocks)
-            
+
         Returns:
             Extracted text content
         """

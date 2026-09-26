@@ -24,14 +24,13 @@ from tealtiger.core.engine.v2_1.governance_engine import (
     GovernanceEngineV21Options,
 )
 from tealtiger.core.engine.v2_1.types import (
+    GENESIS_RECEIPT_REF,
     ContiguityFailure,
     ContiguitySuccess,
     DecisionV21,
-    GENESIS_RECEIPT_REF,
     GovernanceSeal,
 )
 from tealtiger.core.engine.v2_1.verify_contiguity import verify_contiguity
-
 
 # ── Helpers ────────────────────────────────────────────────────────
 

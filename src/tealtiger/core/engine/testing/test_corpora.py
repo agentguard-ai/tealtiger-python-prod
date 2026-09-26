@@ -19,16 +19,16 @@ from .types import ExpectedDecision, PolicyTestCase
 
 class TestCorpora:
     """Pre-built test corpora for policy testing.
-    
+
     Provides starter test cases for common security scenarios.
-    
+
     Example:
         ```python
         from tealtiger import PolicyTester, TestCorpora
-        
+
         # Get prompt injection test cases
         injection_tests = TestCorpora.prompt_injection()
-        
+
         # Run tests
         for test in injection_tests:
             result = tester.run_test(test)
@@ -39,7 +39,7 @@ class TestCorpora:
     @staticmethod
     def prompt_injection() -> List[PolicyTestCase]:
         """Prompt injection detection test cases.
-        
+
         Returns:
             List of test cases for prompt injection scenarios
         """
@@ -119,7 +119,7 @@ class TestCorpora:
     @staticmethod
     def pii_detection() -> List[PolicyTestCase]:
         """PII detection test cases.
-        
+
         Returns:
             List of test cases for PII detection scenarios
         """
@@ -199,7 +199,7 @@ class TestCorpora:
     @staticmethod
     def unsafe_code() -> List[PolicyTestCase]:
         """Unsafe code detection test cases.
-        
+
         Returns:
             List of test cases for unsafe code scenarios
         """
@@ -284,7 +284,7 @@ class TestCorpora:
     @staticmethod
     def tool_misuse() -> List[PolicyTestCase]:
         """Tool misuse detection test cases.
-        
+
         Returns:
             List of test cases for tool misuse scenarios
         """
@@ -367,7 +367,7 @@ class TestCorpora:
     @staticmethod
     def cost_limits() -> List[PolicyTestCase]:
         """Cost limit detection test cases.
-        
+
         Returns:
             List of test cases for cost limit scenarios
         """
@@ -456,7 +456,7 @@ class TestCorpora:
     @staticmethod
     def all() -> List[PolicyTestCase]:
         """Get all test cases from all corpora.
-        
+
         Returns:
             Combined list of all test cases
         """

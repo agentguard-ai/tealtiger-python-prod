@@ -14,18 +14,17 @@ from __future__ import annotations
 
 import pytest
 
-from tealtiger.registry.detectors import (
-    CompositionAllowlist,
-    check_composition,
-    scan_tool_description,
-)
 from tealtiger.modules.tealclassifier import (
     ClassifierConfig,
     ClassifierEvent,
     EnsembleEvaluator,
     TealClassifierModule,
 )
-
+from tealtiger.registry.detectors import (
+    CompositionAllowlist,
+    check_composition,
+    scan_tool_description,
+)
 
 # ══════════════════════════════════════════════════════════════════
 # Tool Description Scanner Tests

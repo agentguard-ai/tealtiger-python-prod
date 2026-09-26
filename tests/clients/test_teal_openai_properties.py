@@ -4,21 +4,19 @@ Property-based tests for TealOpenAI client.
 These tests validate universal properties that should hold across all inputs.
 """
 
-import pytest
-from hypothesis import given, strategies as st, settings
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from tealtiger.clients.teal_openai import (
     TealOpenAI,
     TealOpenAIConfig,
-    ChatCompletionResponse,
 )
-from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
 from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
-from tealtiger.cost.budget import BudgetManager
-from tealtiger.cost.storage import InMemoryCostStorage
-from tealtiger.cost.types import TokenUsage
+from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
 
 
 # Test strategies
@@ -50,18 +48,18 @@ def create_mock_response(model: str, prompt_tokens: int, completion_tokens: int)
     response.object = 'chat.completion'
     response.created = int(datetime.now().timestamp())
     response.model = model
-    
+
     choice = MagicMock()
     choice.index = 0
     choice.message.role = 'assistant'
     choice.message.content = 'This is a test response.'
     choice.finish_reason = 'stop'
     response.choices = [choice]
-    
+
     response.usage.prompt_tokens = prompt_tokens
     response.usage.completion_tokens = completion_tokens
     response.usage.total_tokens = prompt_tokens + completion_tokens
-    
+
     return response
 
 
@@ -98,14 +96,14 @@ async def test_property_17_input_guardrail_execution(messages, model):
     """
     Feature: python-sdk-feature-parity, Property 17: Input guardrail execution
     **Validates: Requirements 4.2**
-    
-    For any request with guardrails enabled, the guardrail engine should execute 
+
+    For any request with guardrails enabled, the guardrail engine should execute
     on the user messages before the API call.
     """
     # Create mock guardrail engine
     engine = MagicMock(spec=GuardrailEngine)
     engine.execute = AsyncMock(return_value=create_passing_guardrail_result())
-    
+
     # Create guarded client with guardrails enabled
     config = TealOpenAIConfig(
         api_key='test-key',
@@ -115,7 +113,7 @@ async def test_property_17_input_guardrail_execution(messages, model):
         guardrail_engine=engine
     )
     client = TealOpenAI(config)
-    
+
     # Mock OpenAI API call
     mock_response = create_mock_response(model, 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
@@ -124,10 +122,10 @@ async def test_property_17_input_guardrail_execution(messages, model):
             model=model,
             messages=messages
         )
-        
+
         # Property: Guardrail engine should have been called
         assert engine.execute.called, "Guardrail engine should be executed"
-        
+
         # Property: Response should include guardrail result
         assert response.security is not None, "Response should include security metadata"
         assert response.security.guardrail_result is not None, "Security should include guardrail result"
@@ -144,14 +142,14 @@ async def test_property_18_input_guardrail_blocking(messages, model, risk_score)
     """
     Feature: python-sdk-feature-parity, Property 18: Input guardrail blocking
     **Validates: Requirements 4.3**
-    
-    For any request where input guardrails fail, the request should be blocked 
+
+    For any request where input guardrails fail, the request should be blocked
     and raise an error before making the API call.
     """
     # Create mock guardrail engine that fails
     engine = MagicMock(spec=GuardrailEngine)
     engine.execute = AsyncMock(return_value=create_failing_guardrail_result(risk_score))
-    
+
     # Create guarded client
     config = TealOpenAIConfig(
         api_key='test-key',
@@ -161,7 +159,7 @@ async def test_property_18_input_guardrail_blocking(messages, model, risk_score)
         guardrail_engine=engine
     )
     client = TealOpenAI(config)
-    
+
     # Mock OpenAI API call (should not be reached)
     mock_response = create_mock_response(model, 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
@@ -171,7 +169,7 @@ async def test_property_18_input_guardrail_blocking(messages, model, risk_score)
                 model=model,
                 messages=messages
             )
-        
+
         # Property: OpenAI API should NOT be called
         assert not mock_create.called, "OpenAI API should not be called when guardrails fail"
 
@@ -186,24 +184,24 @@ async def test_property_19_cost_estimation_before_api_call(messages, model):
     """
     Feature: python-sdk-feature-parity, Property 19: Cost estimation before API call
     **Validates: Requirements 4.4**
-    
-    For any request with cost tracking enabled, cost estimation should occur 
+
+    For any request with cost tracking enabled, cost estimation should occur
     before the API call.
     """
     # Create cost tracker
     tracker = CostTracker(CostTrackerConfig(enabled=True))
-    
+
     # Track if estimate_cost was called
     estimate_called = False
     original_estimate = tracker.estimate_cost
-    
+
     def track_estimate(*args, **kwargs):
         nonlocal estimate_called
         estimate_called = True
         return original_estimate(*args, **kwargs)
-    
+
     tracker.estimate_cost = track_estimate
-    
+
     # Create guarded client
     config = TealOpenAIConfig(
         api_key='test-key',
@@ -213,7 +211,7 @@ async def test_property_19_cost_estimation_before_api_call(messages, model):
         cost_tracker=tracker
     )
     client = TealOpenAI(config)
-    
+
     # Mock OpenAI API call
     mock_response = create_mock_response(model, 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
@@ -222,10 +220,10 @@ async def test_property_19_cost_estimation_before_api_call(messages, model):
             model=model,
             messages=messages
         )
-        
+
         # Property: Cost estimation should have been called
         assert estimate_called, "Cost estimation should occur before API call"
-        
+
         # Property: Response should include cost record
         assert response.security is not None, "Response should include security metadata"
         assert response.security.cost_record is not None, "Security should include cost record"

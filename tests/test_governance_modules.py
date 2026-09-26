@@ -9,30 +9,27 @@ Covers:
 Requirements: 12.1
 """
 
-import time
 
-import pytest
 
+from tealtiger.cost.governance_cost import (
+    AnomalyDetectorConfig,
+    CostAnomalyDetector,
+    CostGovernanceConfig,
+    GovernanceCostEnforcer,
+    GovernanceCostLimits,
+)
 from tealtiger.modules.governance_modules import (
-    TealDriftModule,
-    TealStateModule,
-    TealTemporalModule,
+    ContextEntry,
+    CooldownRule,
     DriftConfig,
     DriftObservation,
     StateConfig,
-    ContextEntry,
+    TealDriftModule,
+    TealStateModule,
+    TealTemporalModule,
     TemporalConfig,
-    CooldownRule,
     TimeRestriction,
 )
-from tealtiger.cost.governance_cost import (
-    GovernanceCostEnforcer,
-    CostAnomalyDetector,
-    CostGovernanceConfig,
-    GovernanceCostLimits,
-    AnomalyDetectorConfig,
-)
-
 
 # ══════════════════════════════════════════════════════════════════
 # TealDrift Tests
@@ -358,7 +355,6 @@ class TestTealTemporalTimeRestriction:
 
     def test_allowed_during_business_hours(self):
         from datetime import datetime, timezone
-        import calendar
 
         # Create a time that's a Wednesday at 10:00 UTC
         # Wednesday = weekday 2 in Python, JS day = 3

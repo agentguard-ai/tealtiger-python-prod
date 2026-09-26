@@ -34,7 +34,7 @@ class CircuitState(str, Enum):
 
 def get_component_versions_with_circuit() -> Dict[str, str]:
     """Get component versions including circuit.
-    
+
     Returns:
         Dict with component versions
     """
@@ -61,27 +61,27 @@ class CircuitOpenError(Exception):
 
 class TealCircuit:
     """TealCircuit - Circuit breaker for preventing cascading failures.
-    
+
     Implements the circuit breaker pattern with three states:
     - CLOSED: Normal operation, requests pass through
     - OPEN: Circuit is tripped, requests fail immediately
     - HALF-OPEN: Testing if the service has recovered
-    
+
     Returns Decision objects for consistency with TealEngine and TealGuard.
-    
+
     Example:
         >>> from tealtiger.core.circuit import TealCircuit
         >>> from tealtiger.core.context import ContextManager
-        >>> 
+        >>>
         >>> circuit = TealCircuit(
         ...     failure_threshold=5,
         ...     timeout=60000,
         ...     half_open_requests=3
         ... )
-        >>> 
+        >>>
         >>> context = ContextManager.create_context()
         >>> decision = circuit.evaluate(context)
-        >>> 
+        >>>
         >>> if decision.action == DecisionAction.DENY:
         ...     print("Circuit is open, service unavailable")
     """
@@ -94,7 +94,7 @@ class TealCircuit:
         on_state_change: Optional[Callable[[CircuitState, CircuitState], None]] = None,
     ):
         """Initialize TealCircuit.
-        
+
         Args:
             failure_threshold: Number of consecutive failures before opening circuit
             timeout: Time in milliseconds to wait before attempting to close circuit
@@ -114,13 +114,13 @@ class TealCircuit:
 
     async def execute(self, fn: Callable[[], T]) -> T:
         """Execute a function with circuit breaker protection.
-        
+
         Args:
             fn: Async function to execute
-            
+
         Returns:
             Result of the function
-            
+
         Raises:
             CircuitOpenError: If circuit is open
         """
@@ -141,16 +141,16 @@ class TealCircuit:
 
     def evaluate(self, context: Optional[ExecutionContext] = None) -> Decision:
         """Evaluate circuit state and return a Decision object.
-        
+
         This method checks the circuit state and returns a Decision object
         indicating whether the operation should be allowed or denied.
-        
+
         Part of TealTiger v1.1.x - Enterprise Adoption Features (P0.2)
         Returns Decision object with same structure as TealEngine and TealGuard.
-        
+
         Args:
             context: Optional ExecutionContext for tracing
-            
+
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
@@ -230,7 +230,7 @@ class TealCircuit:
 
     def get_state(self) -> CircuitState:
         """Get current circuit state.
-        
+
         Returns:
             Current CircuitState
         """
@@ -256,7 +256,7 @@ class TealCircuit:
 
     def get_stats(self) -> Dict[str, Any]:
         """Get circuit statistics.
-        
+
         Returns:
             Dict with circuit stats
         """
@@ -296,7 +296,7 @@ class TealCircuit:
 
     def _should_attempt_reset(self) -> bool:
         """Check if enough time has passed to attempt reset.
-        
+
         Returns:
             True if should attempt reset, False otherwise
         """
@@ -308,7 +308,7 @@ class TealCircuit:
 
     def _transition_to(self, new_state: CircuitState) -> None:
         """Transition to a new state.
-        
+
         Args:
             new_state: New CircuitState
         """

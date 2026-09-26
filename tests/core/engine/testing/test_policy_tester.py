@@ -19,10 +19,10 @@ import pytest
 
 from tealtiger.core.engine.testing import (
     PolicyTestCase,
+    PolicyTester,
     PolicyTestReport,
     PolicyTestResult,
     PolicyTestSuite,
-    PolicyTester,
 )
 from tealtiger.core.engine.types import DecisionAction, PolicyMode, ReasonCode
 

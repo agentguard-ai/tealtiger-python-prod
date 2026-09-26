@@ -10,7 +10,7 @@ no information loss, all timing metadata preserved, and TEEC v2.1 chain intact.
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pytest
 from hypothesis import given, settings
@@ -21,9 +21,7 @@ from tealtiger.pipeline.types import (
     PipelineConfig,
     PipelineRequest,
     PipelineResult,
-    PipelineStage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

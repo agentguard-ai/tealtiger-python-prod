@@ -8,7 +8,6 @@ Verifies:
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -16,15 +15,12 @@ import pytest
 
 from tealtiger.pipeline.remediation_handler import (
     RemediationHandler,
-    RemediationResult,
 )
 from tealtiger.pipeline.types import (
-    ACTION_SEVERITY,
     ModuleEvalDetail,
     PipelineRequest,
     RemediationAction,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers / Mocks

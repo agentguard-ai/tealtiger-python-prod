@@ -14,21 +14,20 @@ from __future__ import annotations
 import asyncio
 from dataclasses import asdict
 
-from hypothesis import given, settings, HealthCheck, assume
 import hypothesis.strategies as st
+from hypothesis import HealthCheck, assume, given, settings
 
 from tealtiger.core.engine.v2_1.governance_engine import (
     GovernanceEngineV21,
     GovernanceEngineV21Options,
 )
-from tealtiger.core.engine.v2_1.validate_governance_decision import (
-    validate_governance_decision,
-)
 from tealtiger.core.engine.v2_1.types import (
     ValidationContext,
     ValidationFailure,
 )
-
+from tealtiger.core.engine.v2_1.validate_governance_decision import (
+    validate_governance_decision,
+)
 
 # ---------------------------------------------------------------------------
 # Strategies
