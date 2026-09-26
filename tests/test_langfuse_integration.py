@@ -1,7 +1,8 @@
 """Tests for TealTiger → Langfuse governance trace export."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture

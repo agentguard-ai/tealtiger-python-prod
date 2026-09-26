@@ -3,21 +3,19 @@ Unit tests for TealAudit redaction module
 Tests RedactionLevel, PII detection, and content redaction
 """
 
-import pytest
 
 from tealtiger.core.audit.redaction import (
-    RedactionLevel,
-    ContentCategory,
-    SafeContentWithRaw,
     PIIDetection,
-    redact_content,
-    compute_sha256_hash,
+    RedactionLevel,
+    SafeContentWithRaw,
     categorize_content,
-    is_valid_redaction_level,
-    get_default_redaction_level,
+    compute_sha256_hash,
     detect_pii_patterns,
-    redact_pii_from_content,
+    get_default_redaction_level,
+    is_valid_redaction_level,
+    redact_content,
     redact_content_with_pii,
+    redact_pii_from_content,
 )
 
 

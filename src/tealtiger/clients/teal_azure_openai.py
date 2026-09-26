@@ -93,13 +93,13 @@ class ChatCompletions:
     async def create(self, **kwargs) -> AzureChatCompletionResponse:
         """
         Create a chat completion with security and cost tracking.
-        
+
         Args:
             **kwargs: Chat completion parameters (deployment, messages, etc.)
-            
+
         Returns:
             AzureChatCompletionResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -115,13 +115,13 @@ class DeploymentsChatCompletions:
     async def create(self, **kwargs) -> AzureChatCompletionResponse:
         """
         Create a chat completion with security and cost tracking.
-        
+
         Args:
             **kwargs: Chat completion parameters (deployment, messages, etc.)
-            
+
         Returns:
             AzureChatCompletionResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -167,22 +167,22 @@ class Chat:
 class TealAzureOpenAI:
     """
     TealAzureOpenAI client - drop-in replacement for Azure OpenAI with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for Azure OpenAI API calls.
-    
+
     Example:
         ```python
         from tealtiger import TealAzureOpenAI, TealAzureOpenAIConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealAzureOpenAI(TealAzureOpenAIConfig(
             api_key="your-api-key",
@@ -193,13 +193,13 @@ class TealAzureOpenAI:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal Azure OpenAI client
         response = await client.chat.completions.create(
             deployment="gpt-4-deployment",
             messages=[{"role": "user", "content": "Hello!"}]
         )
-        
+
         # Or use Azure-specific deployments API
         response = await client.deployments.chat.completions.create(
             deployment="gpt-4-deployment",
@@ -211,7 +211,7 @@ class TealAzureOpenAI:
     def __init__(self, config: TealAzureOpenAIConfig):
         """
         Initialize TealAzureOpenAI client.
-        
+
         Args:
             config: Configuration for the guarded client
         """
@@ -244,13 +244,13 @@ class TealAzureOpenAI:
     def map_deployment_to_model(self, deployment: str) -> str:
         """
         Map Azure deployment name to OpenAI model name for pricing.
-        
+
         Azure deployments can have custom names, so we need to infer the
         underlying model from the deployment name for accurate pricing.
-        
+
         Args:
             deployment: Azure deployment name
-            
+
         Returns:
             OpenAI model name for pricing
         """
@@ -277,13 +277,13 @@ class TealAzureOpenAI:
     async def _create_chat_completion(self, **kwargs) -> AzureChatCompletionResponse:
         """
         Internal method to create a chat completion with security and cost tracking.
-        
+
         Args:
             **kwargs: Chat completion parameters (deployment, messages, etc.)
-            
+
         Returns:
             AzureChatCompletionResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """

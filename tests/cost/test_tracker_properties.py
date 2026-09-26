@@ -4,12 +4,12 @@ Property-based tests for CostTracker.
 Tests universal properties of cost tracking using Hypothesis.
 """
 
-import pytest
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
-from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
-from tealtiger.cost.types import TokenUsage, ModelPricing
 from tealtiger.cost.pricing import MODEL_PRICING
+from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
+from tealtiger.cost.types import ModelPricing, TokenUsage
 
 
 @settings(max_examples=100)
@@ -21,27 +21,27 @@ from tealtiger.cost.pricing import MODEL_PRICING
 def test_cost_estimation_accuracy(model: str, input_tokens: int, output_tokens: int):
     """
     Feature: python-sdk-feature-parity, Property 1: Cost estimation accuracy
-    For any model with pricing data and any token usage, the estimated cost 
-    should equal (input_tokens / 1000 * input_cost_per_1k) + 
+    For any model with pricing data and any token usage, the estimated cost
+    should equal (input_tokens / 1000 * input_cost_per_1k) +
     (output_tokens / 1000 * output_cost_per_1k)
     **Validates: Requirements 1.1**
     """
     tracker = CostTracker()
     pricing = MODEL_PRICING[model]
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     # Calculate expected cost
     expected_input_cost = (input_tokens / 1000) * pricing.input_cost_per_1k
     expected_output_cost = (output_tokens / 1000) * pricing.output_cost_per_1k
     expected_total = expected_input_cost + expected_output_cost
-    
+
     # Verify cost calculation
     assert abs(estimate.estimated_cost - expected_total) < 0.0001, \
         f"Estimated cost {estimate.estimated_cost} should equal {expected_total}"
@@ -59,8 +59,8 @@ def test_cost_estimation_accuracy(model: str, input_tokens: int, output_tokens: 
     images=st.integers(min_value=0, max_value=10)
 )
 def test_cost_estimation_with_images(
-    model: str, 
-    input_tokens: int, 
+    model: str,
+    input_tokens: int,
     output_tokens: int,
     images: int
 ):
@@ -69,27 +69,27 @@ def test_cost_estimation_with_images(
     """
     tracker = CostTracker()
     pricing = MODEL_PRICING[model]
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens,
         images=images if images > 0 else None
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     # Calculate expected cost
     expected_input_cost = (input_tokens / 1000) * pricing.input_cost_per_1k
     expected_output_cost = (output_tokens / 1000) * pricing.output_cost_per_1k
     expected_total = expected_input_cost + expected_output_cost
-    
+
     # Add image cost if applicable
     if images > 0 and pricing.image_cost:
         expected_image_cost = images * pricing.image_cost
         expected_total += expected_image_cost
         assert abs(estimate.breakdown.image_cost - expected_image_cost) < 0.0001
-    
+
     assert abs(estimate.estimated_cost - expected_total) < 0.0001
 
 
@@ -102,27 +102,27 @@ def test_cost_estimation_with_images(
 def test_cost_breakdown_consistency(model: str, input_tokens: int, output_tokens: int):
     """
     Feature: python-sdk-feature-parity, Property 4: Cost breakdown consistency
-    For any cost calculation, the sum of input_cost and output_cost (and optional 
+    For any cost calculation, the sum of input_cost and output_cost (and optional
     image_cost and audio_cost) should equal the total cost
     **Validates: Requirements 1.9**
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     # Sum all breakdown components
     breakdown_total = estimate.breakdown.input_cost + estimate.breakdown.output_cost
     if estimate.breakdown.image_cost:
         breakdown_total += estimate.breakdown.image_cost
     if estimate.breakdown.audio_cost:
         breakdown_total += estimate.breakdown.audio_cost
-    
+
     # Verify breakdown sum equals total
     assert abs(estimate.estimated_cost - breakdown_total) < 0.0001, \
         f"Total cost {estimate.estimated_cost} should equal breakdown sum {breakdown_total}"
@@ -140,15 +140,15 @@ def test_disabled_tracker_returns_zero_cost(model: str, input_tokens: int, outpu
     """
     config = CostTrackerConfig(enabled=False)
     tracker = CostTracker(config)
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     assert estimate.estimated_cost == 0.0
     assert estimate.breakdown.input_cost == 0.0
     assert estimate.breakdown.output_cost == 0.0
@@ -160,15 +160,15 @@ def test_unsupported_model_returns_zero_cost():
     **Validates: Requirements 1.8**
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=1000,
         output_tokens=500,
         total_tokens=1500
     )
-    
+
     estimate = tracker.estimate_cost('nonexistent-model', tokens)
-    
+
     assert estimate.estimated_cost == 0.0
     assert estimate.breakdown.input_cost == 0.0
     assert estimate.breakdown.output_cost == 0.0
@@ -186,22 +186,22 @@ def test_estimate_has_required_fields(model: str, input_tokens: int, output_toke
     Property: All cost estimates should have required fields.
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     assert hasattr(estimate, 'estimated_cost')
     assert hasattr(estimate, 'model')
     assert hasattr(estimate, 'provider')
     assert hasattr(estimate, 'estimated_tokens')
     assert hasattr(estimate, 'breakdown')
     assert hasattr(estimate, 'timestamp')
-    
+
     assert isinstance(estimate.estimated_cost, (int, float))
     assert estimate.estimated_cost >= 0
     assert isinstance(estimate.model, str)
@@ -220,15 +220,15 @@ def test_zero_tokens_returns_zero_cost(model: str, input_tokens: int, output_tok
     Property: Zero tokens should result in zero cost.
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     if input_tokens == 0 and output_tokens == 0:
         assert estimate.estimated_cost == 0.0
         assert estimate.breakdown.input_cost == 0.0
@@ -246,32 +246,32 @@ def test_zero_tokens_returns_zero_cost(model: str, input_tokens: int, output_tok
 def test_actual_cost_calculation_accuracy(model: str, input_tokens: int, output_tokens: int):
     """
     Feature: python-sdk-feature-parity, Property 2: Actual cost calculation accuracy
-    For any model with pricing data and any actual token usage, the calculated cost 
-    should equal (input_tokens / 1000 * input_cost_per_1k) + 
+    For any model with pricing data and any actual token usage, the calculated cost
+    should equal (input_tokens / 1000 * input_cost_per_1k) +
     (output_tokens / 1000 * output_cost_per_1k)
     **Validates: Requirements 1.2**
     """
     tracker = CostTracker()
     pricing = MODEL_PRICING[model]
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     record = tracker.calculate_actual_cost(
         request_id='test-request',
         agent_id='test-agent',
         model=model,
         actual_tokens=tokens
     )
-    
+
     # Calculate expected cost
     expected_input_cost = (input_tokens / 1000) * pricing.input_cost_per_1k
     expected_output_cost = (output_tokens / 1000) * pricing.output_cost_per_1k
     expected_total = expected_input_cost + expected_output_cost
-    
+
     # Verify cost calculation
     assert abs(record.actual_cost - expected_total) < 0.0001, \
         f"Actual cost {record.actual_cost} should equal {expected_total}"
@@ -301,12 +301,12 @@ def test_custom_pricing_override(
 ):
     """
     Feature: python-sdk-feature-parity, Property 3: Custom pricing override
-    For any model with custom pricing, cost calculations should use the custom 
+    For any model with custom pricing, cost calculations should use the custom
     pricing values instead of default pricing
     **Validates: Requirements 1.7**
     """
     tracker = CostTracker()
-    
+
     # Add custom pricing
     custom_pricing = ModelPricing(
         model=model,
@@ -316,20 +316,20 @@ def test_custom_pricing_override(
         last_updated='2026-01-31'
     )
     tracker.add_custom_pricing(model, custom_pricing)
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     estimate = tracker.estimate_cost(model, tokens)
-    
+
     # Calculate expected cost with custom pricing
     expected_input_cost = (input_tokens / 1000) * custom_input_cost
     expected_output_cost = (output_tokens / 1000) * custom_output_cost
     expected_total = expected_input_cost + expected_output_cost
-    
+
     # Verify custom pricing is used
     assert abs(estimate.estimated_cost - expected_total) < 0.0001, \
         f"Should use custom pricing: {estimate.estimated_cost} vs {expected_total}"
@@ -348,7 +348,7 @@ def test_custom_pricing_can_be_removed():
     """
     tracker = CostTracker()
     model = 'gpt-4'
-    
+
     # Add custom pricing
     custom_pricing = ModelPricing(
         model=model,
@@ -358,16 +358,16 @@ def test_custom_pricing_can_be_removed():
         last_updated='2026-01-31'
     )
     tracker.add_custom_pricing(model, custom_pricing)
-    
+
     # Verify custom pricing is used
     pricing = tracker.get_pricing(model)
     assert pricing is not None
     assert pricing.input_cost_per_1k == 0.05
     assert pricing.output_cost_per_1k == 0.10
-    
+
     # Remove custom pricing
     tracker.remove_custom_pricing(model)
-    
+
     # Verify default pricing is used again
     pricing = tracker.get_pricing(model)
     assert pricing is not None
@@ -386,13 +386,13 @@ def test_actual_cost_record_has_unique_id(model: str, input_tokens: int, output_
     Property: Each cost record should have a unique ID.
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     # Create multiple records
     record1 = tracker.calculate_actual_cost(
         request_id='req-1',
@@ -400,14 +400,14 @@ def test_actual_cost_record_has_unique_id(model: str, input_tokens: int, output_
         model=model,
         actual_tokens=tokens
     )
-    
+
     record2 = tracker.calculate_actual_cost(
         request_id='req-2',
         agent_id='agent-1',
         model=model,
         actual_tokens=tokens
     )
-    
+
     # IDs should be different
     assert record1.id != record2.id
     assert len(record1.id) > 0
@@ -425,19 +425,19 @@ def test_cost_record_preserves_metadata(model: str, input_tokens: int, output_to
     Property: Cost records should preserve metadata.
     """
     tracker = CostTracker()
-    
+
     tokens = TokenUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         total_tokens=input_tokens + output_tokens
     )
-    
+
     metadata = {
         'user_id': 'user-123',
         'session_id': 'session-456',
         'custom_field': 'custom_value'
     }
-    
+
     record = tracker.calculate_actual_cost(
         request_id='test-request',
         agent_id='test-agent',
@@ -445,7 +445,7 @@ def test_cost_record_preserves_metadata(model: str, input_tokens: int, output_to
         actual_tokens=tokens,
         metadata=metadata
     )
-    
+
     assert record.metadata is not None
     assert record.metadata['user_id'] == 'user-123'
     assert record.metadata['session_id'] == 'session-456'

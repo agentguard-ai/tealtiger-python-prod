@@ -10,7 +10,6 @@ Covers:
 Requirements: 12.1, 12.2
 """
 
-import pytest
 
 from tealtiger.guardrails.detectors_v13 import (
     detect_encoded_output,
@@ -22,7 +21,6 @@ from tealtiger.memory.detectors import (
     detect_memory_instruction_injection,
     score_instruction_likeness,
 )
-
 
 # ── Encoded Output Detection ─────────────────────────────────────
 

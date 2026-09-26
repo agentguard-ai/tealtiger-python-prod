@@ -443,7 +443,7 @@ def redact_content_with_pii(
                 result.metadata = {}
             result.metadata["pii_detected"] = True
             result.metadata["pii_count"] = len(detections)
-            result.metadata["pii_types"] = list(set(d.type for d in detections))
+            result.metadata["pii_types"] = list({d.type for d in detections})
 
         return result
 

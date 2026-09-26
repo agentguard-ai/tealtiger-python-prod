@@ -65,8 +65,13 @@ class AuditOutput(ABC):
         """Write an audit event to the output"""
         pass
 
-    def close(self) -> None:
-        """Close the output (optional)"""
+    def close(self) -> None:  # noqa: B027 - intentionally optional, not abstract
+        """Close the output (optional).
+
+        Deliberately concrete with a no-op body: outputs that hold no resource
+        (e.g. console) should not be forced to implement it. Marking this
+        @abstractmethod would break every existing subclass.
+        """
         pass
 
 

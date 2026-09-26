@@ -24,8 +24,6 @@ from tealtiger.core.engine.v2_1.governance_engine import (
     GovernanceEngineV21Options,
 )
 from tealtiger.core.engine.v2_1.types import (
-    DecisionV21,
-    GovernanceSeal,
     ValidationContext,
     ValidationFailure,
     ValidationSuccess,
@@ -33,7 +31,6 @@ from tealtiger.core.engine.v2_1.types import (
 from tealtiger.core.engine.v2_1.validate_governance_decision import (
     validate_governance_decision,
 )
-
 
 # ── Helpers ────────────────────────────────────────────────────────
 

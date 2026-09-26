@@ -23,7 +23,7 @@ def test_teal_engine_initialization():
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     assert engine is not None
     assert engine.mode_config.default == PolicyMode.ENFORCE
 
@@ -34,13 +34,13 @@ def test_teal_engine_report_only_mode():
         policies={},
         mode=ModeConfig(default=PolicyMode.REPORT_ONLY),
     )
-    
+
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
         context,
     )
-    
+
     assert isinstance(decision, Decision)
     assert decision.action == DecisionAction.ALLOW
     assert ReasonCode.REPORT_ONLY_MODE in decision.reason_codes
@@ -55,13 +55,13 @@ def test_teal_engine_monitor_mode():
         policies={},
         mode=ModeConfig(default=PolicyMode.MONITOR),
     )
-    
+
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
         context,
     )
-    
+
     assert isinstance(decision, Decision)
     assert decision.action == DecisionAction.ALLOW
     assert decision.mode == PolicyMode.MONITOR
@@ -75,13 +75,13 @@ def test_teal_engine_enforce_mode():
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
         context,
     )
-    
+
     assert isinstance(decision, Decision)
     assert decision.mode == PolicyMode.ENFORCE
     assert decision.correlation_id == context.correlation_id
@@ -94,13 +94,13 @@ def test_teal_engine_decision_structure():
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
         context,
     )
-    
+
     # Required fields
     assert hasattr(decision, "action")
     assert hasattr(decision, "reason_codes")
@@ -112,7 +112,7 @@ def test_teal_engine_decision_structure():
     assert hasattr(decision, "correlation_id")
     assert hasattr(decision, "reason")
     assert hasattr(decision, "metadata")
-    
+
     # Validate types
     assert isinstance(decision.action, DecisionAction)
     assert isinstance(decision.reason_codes, list)
@@ -124,7 +124,7 @@ def test_teal_engine_decision_structure():
     assert isinstance(decision.correlation_id, str)
     assert isinstance(decision.reason, str)
     assert isinstance(decision.metadata, dict)
-    
+
     # Validate risk score bounds
     assert 0 <= decision.risk_score <= 100
 
@@ -139,7 +139,7 @@ def test_teal_engine_hierarchical_mode_resolution():
             policy={"tools.file_delete": PolicyMode.REPORT_ONLY},
         ),
     )
-    
+
     # Test policy-specific override (highest priority)
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
@@ -147,7 +147,7 @@ def test_teal_engine_hierarchical_mode_resolution():
         context,
     )
     assert decision.mode == PolicyMode.REPORT_ONLY
-    
+
     # Test environment-specific override
     context_staging = ContextManager.create_context()
     context_staging.environment = "staging"
@@ -164,13 +164,13 @@ def test_teal_engine_component_versions():
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     context = ContextManager.create_context()
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute"},
         context,
     )
-    
+
     assert "sdk" in decision.component_versions
     assert "engine" in decision.component_versions
     assert decision.component_versions["sdk"] is not None
@@ -185,17 +185,17 @@ def test_teal_engine_execution_context_propagation():
     context.run_id = "run-789"
     context.span_id = "span-abc"
     context.tenant_id = "tenant-xyz"
-    
+
     engine = TealEngine(
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute"},
         context,
     )
-    
+
     assert decision.correlation_id == context.correlation_id
     assert decision.trace_id == "trace-123"
     assert decision.workflow_id == "workflow-456"
@@ -210,12 +210,12 @@ def test_teal_engine_auto_generates_context():
         policies={},
         mode=ModeConfig(default=PolicyMode.ENFORCE),
     )
-    
+
     # Call without ExecutionContext
     decision = engine.evaluate_with_mode(
         {"agentId": "agent-001", "action": "tool.execute"},
     )
-    
+
     # Should have auto-generated correlation_id
     assert decision.correlation_id is not None
     assert len(decision.correlation_id) > 0

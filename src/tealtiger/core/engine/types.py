@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 class PolicyMode(str, Enum):
     """Policy rollout modes for safe policy deployment.
-    
+
     Part of P0.1: Policy Rollout Modes
     """
 
@@ -29,7 +29,7 @@ class PolicyMode(str, Enum):
 
 class DecisionAction(str, Enum):
     """Actions that can be taken on a request.
-    
+
     Part of P0.2: Deterministic Decision Contract
     """
 
@@ -54,7 +54,7 @@ class DecisionAction(str, Enum):
 
 class ReasonCode(str, Enum):
     """Standardized reason codes for decisions.
-    
+
     Part of P0.2: Deterministic Decision Contract
     """
 
@@ -166,9 +166,9 @@ class ReasonCode(str, Enum):
 
 class ModeConfig(BaseModel):
     """Configuration for policy rollout modes.
-    
+
     Part of P0.1: Policy Rollout Modes
-    
+
     Priority: policy-specific > environment-specific > global default
     """
 
@@ -197,9 +197,9 @@ class ModeConfig(BaseModel):
 
 class Decision(BaseModel):
     """Deterministic decision contract for policy evaluation.
-    
+
     Part of P0.2: Deterministic Decision Contract
-    
+
     This is the stable, typed decision object returned by all TealTiger components
     (TealEngine, TealGuard, TealCircuit, TealAudit).
     """

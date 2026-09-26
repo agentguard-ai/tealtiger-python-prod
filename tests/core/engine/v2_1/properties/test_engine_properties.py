@@ -15,8 +15,8 @@ from __future__ import annotations
 import asyncio
 from dataclasses import asdict
 
-from hypothesis import given, settings, HealthCheck
 import hypothesis.strategies as st
+from hypothesis import HealthCheck, given, settings
 
 from tealtiger.core.engine.v2_1.crypto_service import CryptoService
 from tealtiger.core.engine.v2_1.governance_engine import (
@@ -24,7 +24,6 @@ from tealtiger.core.engine.v2_1.governance_engine import (
     GovernanceEngineV21Options,
 )
 from tealtiger.core.engine.v2_1.types import GENESIS_RECEIPT_REF
-
 
 # ---------------------------------------------------------------------------
 # Strategies

@@ -5,9 +5,9 @@ import asyncio
 import pytest
 
 from tealtiger.guardrails import (
+    ContentModerationGuardrail,
     GuardrailEngine,
     PIIDetectionGuardrail,
-    ContentModerationGuardrail,
     PromptInjectionGuardrail,
 )
 

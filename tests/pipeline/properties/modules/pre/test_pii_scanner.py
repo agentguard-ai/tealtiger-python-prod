@@ -1,15 +1,15 @@
 """Unit tests for PIIScannerModule — pre-execution PII scanning."""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "src"))
 
 import pytest
 
 from tealtiger.pipeline.modules.pre.pii_scanner import (
-    PIIScannerModule,
     PIIScannerConfig,
+    PIIScannerModule,
 )
 
 

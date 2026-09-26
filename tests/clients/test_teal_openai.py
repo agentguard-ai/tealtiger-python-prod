@@ -4,19 +4,19 @@ Unit tests for TealOpenAI client.
 These tests validate specific examples and edge cases.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from tealtiger.clients.teal_openai import (
     TealOpenAI,
     TealOpenAIConfig,
-    ChatCompletionResponse,
 )
-from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
-from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
 from tealtiger.cost.budget import BudgetManager
 from tealtiger.cost.storage import InMemoryCostStorage
+from tealtiger.cost.tracker import CostTracker, CostTrackerConfig
+from tealtiger.guardrails.engine import GuardrailEngine, GuardrailEngineResult
 
 
 def create_mock_response(model: str, prompt_tokens: int, completion_tokens: int, content: str = "Test response"):
@@ -26,18 +26,18 @@ def create_mock_response(model: str, prompt_tokens: int, completion_tokens: int,
     response.object = 'chat.completion'
     response.created = int(datetime.utcnow().timestamp())
     response.model = model
-    
+
     choice = MagicMock()
     choice.index = 0
     choice.message.role = 'assistant'
     choice.message.content = content
     choice.finish_reason = 'stop'
     response.choices = [choice]
-    
+
     response.usage.prompt_tokens = prompt_tokens
     response.usage.completion_tokens = completion_tokens
     response.usage.total_tokens = prompt_tokens + completion_tokens
-    
+
     return response
 
 
@@ -50,14 +50,14 @@ async def test_basic_chat_completion():
         enable_cost_tracking=False
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.chat.create(
             model='gpt-4',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.id == 'chatcmpl-test123'
         assert response.model == 'gpt-4'
         assert len(response.choices) == 1
@@ -76,7 +76,7 @@ async def test_guardrails_enabled():
         guardrails_executed=1,
         max_risk_score=0
     ))
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -84,14 +84,14 @@ async def test_guardrails_enabled():
         guardrail_engine=engine
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.chat.create(
             model='gpt-4',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.security is not None
         assert response.security.guardrail_result is not None
         assert response.security.guardrail_result.passed is True
@@ -109,7 +109,7 @@ async def test_guardrails_block_request():
         max_risk_score=90,
         failed_guardrails=['test-guardrail']
     ))
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -117,7 +117,7 @@ async def test_guardrails_block_request():
         guardrail_engine=engine
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
         with pytest.raises(ValueError, match="Guardrail check failed"):
@@ -125,7 +125,7 @@ async def test_guardrails_block_request():
                 model='gpt-4',
                 messages=[{'role': 'user', 'content': 'Malicious input'}]
             )
-        
+
         # Verify API was not called
         assert not mock_create.called
 
@@ -135,7 +135,7 @@ async def test_cost_tracking_enabled():
     """Test chat completion with cost tracking enabled."""
     tracker = CostTracker(CostTrackerConfig(enabled=True))
     storage = InMemoryCostStorage()
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         enable_guardrails=False,
@@ -144,14 +144,14 @@ async def test_cost_tracking_enabled():
         cost_storage=storage
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.chat.create(
             model='gpt-4',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         assert response.security is not None
         assert response.security.cost_record is not None
         assert response.security.cost_record.actual_cost > 0
@@ -164,7 +164,7 @@ async def test_budget_enforcement():
     storage = InMemoryCostStorage()
     budget_manager = BudgetManager(storage)
     tracker = CostTracker(CostTrackerConfig(enabled=True))
-    
+
     # Create a very low budget
     budget_manager.create_budget(
         name='test-budget',
@@ -172,7 +172,7 @@ async def test_budget_enforcement():
         period='total',
         alert_thresholds=[50, 75, 90]
     )
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         enable_guardrails=False,
@@ -181,7 +181,7 @@ async def test_budget_enforcement():
         budget_manager=budget_manager
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)) as mock_create:
         with pytest.raises(ValueError, match="Budget exceeded"):
@@ -189,7 +189,7 @@ async def test_budget_enforcement():
                 model='gpt-4',
                 messages=[{'role': 'user', 'content': 'Hello'}]
             )
-        
+
         # Verify API was not called
         assert not mock_create.called
 
@@ -203,7 +203,7 @@ async def test_multiple_messages():
         enable_cost_tracking=False
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 100, 20)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.chat.create(
@@ -215,7 +215,7 @@ async def test_multiple_messages():
                 {'role': 'user', 'content': 'How are you?'}
             ]
         )
-        
+
         assert response.id == 'chatcmpl-test123'
         assert response.usage['total_tokens'] == 120
 
@@ -224,7 +224,7 @@ async def test_multiple_messages():
 async def test_output_guardrail_failure():
     """Test that output guardrail failures are caught."""
     call_count = 0
-    
+
     async def mock_execute(text):
         nonlocal call_count
         call_count += 1
@@ -245,10 +245,10 @@ async def test_output_guardrail_failure():
                 max_risk_score=95,
                 failed_guardrails=['output-check']
             )
-    
+
     engine = MagicMock(spec=GuardrailEngine)
     engine.execute = mock_execute
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         enable_guardrails=True,
@@ -256,7 +256,7 @@ async def test_output_guardrail_failure():
         guardrail_engine=engine
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10, content='Unsafe output')
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         with pytest.raises(ValueError, match="Output guardrail check failed"):
@@ -278,18 +278,18 @@ async def test_all_features_enabled():
         guardrails_executed=1,
         max_risk_score=0
     ))
-    
+
     storage = InMemoryCostStorage()
     budget_manager = BudgetManager(storage)
     tracker = CostTracker(CostTrackerConfig(enabled=True))
-    
+
     budget_manager.create_budget(
         name='test-budget',
         limit=100.0,
         period='total',
         alert_thresholds=[50, 75, 90]
     )
-    
+
     config = TealOpenAIConfig(
         api_key='test-key',
         agent_id='test-agent',
@@ -301,23 +301,23 @@ async def test_all_features_enabled():
         cost_storage=storage
     )
     client = TealOpenAI(config)
-    
+
     mock_response = create_mock_response('gpt-4', 50, 10)
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(return_value=mock_response)):
         response = await client.chat.create(
             model='gpt-4',
             messages=[{'role': 'user', 'content': 'Hello'}]
         )
-        
+
         # Verify all security metadata is present
         assert response.security is not None
         assert response.security.guardrail_result is not None
         assert response.security.cost_record is not None
         assert response.security.budget_check is not None
-        
+
         # Verify cost was stored
         assert storage.size() == 1
-        
+
         # Verify budget was updated
         budget_status = await budget_manager.get_budget_status(budget_manager.get_all_budgets()[0].id)
         assert budget_status.current_spending > 0
@@ -335,7 +335,7 @@ async def test_configuration_options():
         enable_cost_tracking=False
     )
     client = TealOpenAI(config)
-    
+
     assert client.config.agent_id == 'custom-agent'
     assert client.config.base_url == 'https://custom.openai.com'
     assert client.config.organization == 'org-123'
@@ -352,7 +352,7 @@ async def test_error_handling():
         enable_cost_tracking=False
     )
     client = TealOpenAI(config)
-    
+
     # Mock API call that raises an error
     with patch.object(client.client.chat.completions, 'create', new=AsyncMock(side_effect=Exception("API Error"))):
         with pytest.raises(ValueError, match="TealOpenAI error"):

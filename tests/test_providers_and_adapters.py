@@ -12,48 +12,43 @@ Requirements: 12.1, 13.8, 14.14
 
 from __future__ import annotations
 
-import asyncio
 import pytest
 
-from tealtiger.core.engine.v1_3 import (
-    DecisionV13,
-    GovernanceRequest,
-    TealEngineV13,
-    TealEngineV13Options,
-)
-from tealtiger.clients.new_providers import (
-    GROQ_PRICING,
-    DEEPSEEK_PRICING,
-    TOGETHER_PRICING,
-    XAI_PRICING,
-    HF_TGI_PRICING,
-    ProviderConfig,
-    TealGroq,
-    TealDeepSeek,
-    TealTogether,
-    TealXai,
-    TealHfTgi,
-)
 from tealtiger.adapters import (
-    BedrockGuardrailAdapter,
     AgentCorePlugin,
     AzureAgentMiddleware,
+    BedrockGuardrailAdapter,
     PlatformDecision,
-)
-from tealtiger.adapters.bedrock import (
-    BedrockGuardrailEvent,
-    BedrockAdapterConfig,
 )
 from tealtiger.adapters.agentcore import (
     AgentCoreAction,
     AgentCoreAdapterConfig,
 )
 from tealtiger.adapters.azure import (
-    AzureToolCall,
-    AzureAgentContext,
     AzureAdapterConfig,
+    AzureAgentContext,
+    AzureToolCall,
 )
-
+from tealtiger.adapters.bedrock import (
+    BedrockGuardrailEvent,
+)
+from tealtiger.clients.new_providers import (
+    DEEPSEEK_PRICING,
+    GROQ_PRICING,
+    HF_TGI_PRICING,
+    TOGETHER_PRICING,
+    XAI_PRICING,
+    ProviderConfig,
+    TealDeepSeek,
+    TealGroq,
+    TealHfTgi,
+    TealTogether,
+    TealXai,
+)
+from tealtiger.core.engine.v1_3 import (
+    TealEngineV13,
+    TealEngineV13Options,
+)
 
 # ── Fixtures ──────────────────────────────────────────────────────
 
@@ -71,7 +66,7 @@ class TestProviderPricingConstants:
     def test_groq_pricing_has_models(self):
         assert len(GROQ_PRICING) >= 5
         assert "llama-3.3-70b-versatile" in GROQ_PRICING
-        for model, pricing in GROQ_PRICING.items():
+        for _model, pricing in GROQ_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert pricing["input"] > 0
@@ -81,7 +76,7 @@ class TestProviderPricingConstants:
         assert len(DEEPSEEK_PRICING) >= 3
         assert "deepseek-chat" in DEEPSEEK_PRICING
         assert "deepseek-reasoner" in DEEPSEEK_PRICING
-        for model, pricing in DEEPSEEK_PRICING.items():
+        for _model, pricing in DEEPSEEK_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert pricing["input"] > 0
@@ -90,7 +85,7 @@ class TestProviderPricingConstants:
     def test_together_pricing_has_models(self):
         assert len(TOGETHER_PRICING) >= 5
         assert "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo" in TOGETHER_PRICING
-        for model, pricing in TOGETHER_PRICING.items():
+        for _model, pricing in TOGETHER_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert pricing["input"] > 0
@@ -100,7 +95,7 @@ class TestProviderPricingConstants:
         assert len(XAI_PRICING) >= 4
         assert "grok-3" in XAI_PRICING
         assert "grok-3-mini" in XAI_PRICING
-        for model, pricing in XAI_PRICING.items():
+        for _model, pricing in XAI_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert pricing["input"] > 0
@@ -109,7 +104,7 @@ class TestProviderPricingConstants:
     def test_hf_tgi_pricing_has_models(self):
         assert len(HF_TGI_PRICING) >= 5
         assert "meta-llama/Meta-Llama-3.1-70B-Instruct" in HF_TGI_PRICING
-        for model, pricing in HF_TGI_PRICING.items():
+        for _model, pricing in HF_TGI_PRICING.items():
             assert "input" in pricing
             assert "output" in pricing
             assert pricing["input"] > 0

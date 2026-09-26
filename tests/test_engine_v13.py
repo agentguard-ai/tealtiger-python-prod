@@ -11,26 +11,22 @@ Covers:
 import time
 from typing import List, Literal, Optional
 
-import pytest
-
 from tealtiger.core.engine.v1_3 import (
+    AgentAttestation,
+    AttestationConfig,
+    DecisionV13,
+    FreezeRule,
+    GovernanceContext,
+    GovernanceRequest,
+    JITGrant,
+    NHIDescriptor,
+    PlanOnlyConfig,
+    PolicyMatcher,
     TealEngineV13,
     TealEngineV13Options,
     V13ReasonCode,
-    GovernanceRequest,
-    GovernanceContext,
-    FreezeRule,
-    PolicyMatcher,
-    PlanOnlyConfig,
-    NHIDescriptor,
-    NHIInventory as NHIInventoryProtocol,
     ZSPConfig,
-    JITGrant,
-    AttestationConfig,
-    AgentAttestation,
-    DecisionV13,
 )
-
 
 # ── Helpers ──────────────────────────────────────────────────────
 

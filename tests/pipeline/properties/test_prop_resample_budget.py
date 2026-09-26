@@ -9,9 +9,8 @@ SHALL NOT exceed N.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, List
 
 import pytest
 from hypothesis import given, settings
@@ -20,9 +19,7 @@ from hypothesis import strategies as st
 from tealtiger.pipeline.remediation_handler import RemediationHandler
 from tealtiger.pipeline.types import (
     PipelineRequest,
-    PipelineStage,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers: Always-failing evaluator and provider mocks

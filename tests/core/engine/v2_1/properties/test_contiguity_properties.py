@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import asyncio
 
-from hypothesis import given, settings, HealthCheck
 import hypothesis.strategies as st
+from hypothesis import HealthCheck, given, settings
 
 from tealtiger.core.engine.v2_1.governance_engine import (
     GovernanceEngineV21,
@@ -22,7 +22,6 @@ from tealtiger.core.engine.v2_1.governance_engine import (
 )
 from tealtiger.core.engine.v2_1.types import ContiguitySuccess
 from tealtiger.core.engine.v2_1.verify_contiguity import verify_contiguity
-
 
 # ---------------------------------------------------------------------------
 # Property 8: Verify Contiguity Accepts Valid Chains

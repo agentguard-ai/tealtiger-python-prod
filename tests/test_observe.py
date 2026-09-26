@@ -16,9 +16,9 @@ Tests cover:
 Requirements: 8.1–8.6
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 import uuid
 
 # Ensure the src directory is importable
@@ -27,18 +27,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import pytest
 
 from tealtiger.observe import (
-    observe,
-    freeze,
-    unfreeze,
-    UnsupportedProviderError,
     FrozenAgentError,
+    UnsupportedProviderError,
+    freeze,
+    observe,
+    unfreeze,
 )
+from tealtiger.observe.behavioral_baseline import BehavioralBaseline
 from tealtiger.observe.freeze_registry import FreezeRegistry
 from tealtiger.observe.observe import ObserveProxy
 from tealtiger.observe.pii_scanner import ObservePIIScanner
-from tealtiger.observe.behavioral_baseline import BehavioralBaseline
 from tealtiger.observe.types import BaselineSample
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

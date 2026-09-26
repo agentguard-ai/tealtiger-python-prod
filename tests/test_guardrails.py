@@ -3,8 +3,8 @@
 import pytest
 
 from tealtiger.guardrails import (
-    PIIDetectionGuardrail,
     ContentModerationGuardrail,
+    PIIDetectionGuardrail,
     PromptInjectionGuardrail,
 )
 

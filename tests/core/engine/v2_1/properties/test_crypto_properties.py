@@ -13,11 +13,10 @@ Uses Hypothesis library for property-based testing.
 
 import re
 
-from hypothesis import given, settings
 import hypothesis.strategies as st
+from hypothesis import given, settings
 
 from tealtiger.core.engine.v2_1.crypto_service import CryptoService
-
 
 # Strategy: generate printable text (avoids surrogates that can cause UTF-8 issues)
 text_strategy = st.text(

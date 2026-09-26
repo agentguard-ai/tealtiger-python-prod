@@ -9,11 +9,10 @@ Tests verify:
 Uses Hypothesis library for property-based testing.
 """
 
-from hypothesis import given, settings
 import hypothesis.strategies as st
+from hypothesis import given, settings
 
 from tealtiger.core.engine.v2_1.counter_manager import CounterManager
-
 
 # ---------------------------------------------------------------------------
 # Property 4: Sequence Monotonicity

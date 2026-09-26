@@ -72,29 +72,29 @@ class EmbedResponse(BaseModel):
 class TealCohere:
     """
     TealCohere client - drop-in replacement for Cohere with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for Cohere API calls including chat, RAG, and embeddings.
-    
+
     Key Features:
     - Chat with conversation history
     - RAG (Retrieval-Augmented Generation) with documents
     - Web search connectors
     - Citation tracking
     - Embeddings generation
-    
+
     Example:
         ```python
         from tealtiger import TealCohere, TealCohereConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealCohere(TealCohereConfig(
             api_key="your-api-key",
@@ -105,7 +105,7 @@ class TealCohere:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal Cohere client
         response = await client.chat(
             message="What is machine learning?",
@@ -117,7 +117,7 @@ class TealCohere:
     def __init__(self, config: TealCohereConfig):
         """
         Initialize TealCohere client.
-        
+
         Args:
             config: Configuration for the guarded client
         """
@@ -141,9 +141,9 @@ class TealCohere:
     ) -> ChatResponse:
         """
         Chat with Cohere with security and cost tracking.
-        
+
         Supports conversation history, RAG with documents, and web search connectors.
-        
+
         Args:
             message: User message
             chat_history: Optional conversation history
@@ -160,10 +160,10 @@ class TealCohere:
                 - frequency_penalty: Frequency penalty (0.0-1.0)
                 - presence_penalty: Presence penalty (0.0-1.0)
                 - stream: Boolean for streaming responses
-            
+
         Returns:
             ChatResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -309,16 +309,16 @@ class TealCohere:
     ) -> EmbedResponse:
         """
         Generate embeddings with security and cost tracking.
-        
+
         Args:
             texts: List of texts to embed
             input_type: Type of input ("search_document", "search_query", "classification", "clustering")
             **kwargs: Additional parameters
                 - truncate: Truncation strategy ("NONE", "START", "END")
-            
+
         Returns:
             EmbedResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """

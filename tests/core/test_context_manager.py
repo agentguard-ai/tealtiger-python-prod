@@ -4,7 +4,6 @@ Tests P0.3: Correlation IDs and Traceability
 """
 
 import re
-from datetime import datetime
 
 import pytest
 

@@ -100,14 +100,14 @@ class ChatCompletions:
     async def create(self, **kwargs) -> ChatCompletionResponse:
         """
         Create a chat completion with security and cost tracking.
-        
+
         Args:
             **kwargs: Chat completion parameters (model, messages, etc.)
                      context: Optional[ExecutionContext] - Execution context for tracing
-            
+
         Returns:
             ChatCompletionResponse with security metadata
-            
+
         Raises:
             ValueError: If guardrails fail or budget is exceeded
         """
@@ -310,22 +310,22 @@ class ChatCompletions:
 class TealOpenAI:
     """
     TealOpenAI client - drop-in replacement for OpenAI with security.
-    
+
     Provides integrated guardrails, cost tracking, and budget management
     for OpenAI API calls.
-    
+
     Example:
         ```python
         from tealtiger import TealOpenAI, TealOpenAIConfig
         from tealtiger.guardrails import GuardrailEngine
         from tealtiger.cost import CostTracker, BudgetManager, InMemoryCostStorage
-        
+
         # Create components
         engine = GuardrailEngine()
         tracker = CostTracker()
         storage = InMemoryCostStorage()
         budget_manager = BudgetManager(storage)
-        
+
         # Create guarded client
         client = TealOpenAI(TealOpenAIConfig(
             api_key="your-api-key",
@@ -335,7 +335,7 @@ class TealOpenAI:
             budget_manager=budget_manager,
             cost_storage=storage
         ))
-        
+
         # Use like normal OpenAI client
         response = await client.chat.completions.create(
             model="gpt-4",
@@ -347,7 +347,7 @@ class TealOpenAI:
     def __init__(self, config: TealOpenAIConfig):
         """
         Initialize TealOpenAI client.
-        
+
         Args:
             config: Configuration for the guarded client
         """

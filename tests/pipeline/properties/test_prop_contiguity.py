@@ -10,15 +10,13 @@ previous decision.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
-import pytest
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from tealtiger.pipeline.stage_decision_builder import StageDecisionBuilder, StageDecisionBuildParams
 from tealtiger.pipeline.types import ModuleEvalDetail, PipelineStage
-
 
 # ---------------------------------------------------------------------------
 # Strategies

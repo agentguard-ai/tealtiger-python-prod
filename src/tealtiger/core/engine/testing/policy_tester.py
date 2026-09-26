@@ -29,20 +29,20 @@ from .types import (
 
 class PolicyTester:
     """Policy testing framework for TealEngine.
-    
+
     Executes test cases against a TealEngine instance and generates reports.
-    
+
     Example:
         ```python
         from tealtiger import TealEngine, PolicyTester, PolicyMode
-        
+
         engine = TealEngine(
             policies=my_policies,
             mode={'defaultMode': PolicyMode.ENFORCE}
         )
-        
+
         tester = PolicyTester(engine)
-        
+
         test_case = PolicyTestCase(
             name='Block file deletion',
             context={
@@ -55,7 +55,7 @@ class PolicyTester:
                 'reason_codes': [ReasonCode.TOOL_NOT_ALLOWED]
             }
         )
-        
+
         result = tester.run_test(test_case)
         print(f"Test {'PASSED' if result.passed else 'FAILED'}")
         ```
@@ -63,7 +63,7 @@ class PolicyTester:
 
     def __init__(self, engine: Any) -> None:
         """Initialize PolicyTester with a TealEngine instance.
-        
+
         Args:
             engine: TealEngine instance to test
         """
@@ -74,10 +74,10 @@ class PolicyTester:
 
     def run_test(self, test_case: PolicyTestCase) -> PolicyTestResult:
         """Run a single test case.
-        
+
         Args:
             test_case: Test case to execute
-            
+
         Returns:
             Test result with pass/fail status and details
         """
@@ -128,10 +128,10 @@ class PolicyTester:
 
     def run_suite(self, suite: PolicyTestSuite) -> PolicyTestReport:
         """Run a test suite.
-        
+
         Args:
             suite: Test suite to execute
-            
+
         Returns:
             Comprehensive test report with results and coverage
         """
@@ -171,13 +171,13 @@ class PolicyTester:
 
     def run_from_file(self, file_path: str) -> PolicyTestReport:
         """Load and run tests from a JSON file.
-        
+
         Args:
             file_path: Path to JSON file containing test suite
-            
+
         Returns:
             Test report
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If file format is invalid
@@ -199,14 +199,14 @@ class PolicyTester:
         self, report: PolicyTestReport, format: str = 'json'
     ) -> str:
         """Export test report to JSON or JUnit XML format.
-        
+
         Args:
             report: Test report to export
             format: Output format ('json' or 'junit')
-            
+
         Returns:
             Formatted report string
-            
+
         Raises:
             ValueError: If format is not supported
         """
@@ -256,7 +256,7 @@ class PolicyTester:
         )
 
         untested = sorted(
-            list(self.tracked_policies - self.tested_policies)
+            self.tracked_policies - self.tested_policies
         )
 
         return CoverageInfo(
@@ -290,7 +290,7 @@ class PolicyTester:
         self, actual: Decision, expected: Any
     ) -> tuple[bool, Optional[str]]:
         """Check if actual decision matches expected outcome.
-        
+
         Returns:
             Tuple of (passed, failure_reason)
         """

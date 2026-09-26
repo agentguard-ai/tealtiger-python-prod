@@ -71,21 +71,21 @@ def test(
     verbose: bool,
 ) -> None:
     """Run TealTiger policy tests.
-    
+
     Examples:
-    
+
         # Run tests from a file
         tealtiger test ./policies/customer-support.test.json
-        
+
         # Run tests with tag filtering
         tealtiger test ./policies/*.test.json --tags=pii,injection
-        
+
         # Generate coverage report
         tealtiger test ./policies/*.test.json --coverage
-        
+
         # Export to JUnit XML
         tealtiger test ./policies/*.test.json --format=junit --output=results.xml
-        
+
         # Watch mode for development
         tealtiger test ./policies/*.test.json --watch
     """

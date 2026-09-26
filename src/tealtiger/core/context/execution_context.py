@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 
 class ExecutionContext(BaseModel):
     """Execution context for request tracking and traceability.
-    
+
     Contains correlation ID, trace ID, and optional governance metadata.
-    
+
     Attributes:
         correlation_id: Unique correlation ID for request tracing (UUID v4)
         trace_id: Optional trace ID for distributed tracing (OpenTelemetry-compatible)
@@ -113,7 +113,7 @@ class ExecutionContext(BaseModel):
 
 class ExecutionContextOptions(BaseModel):
     """Options for creating an ExecutionContext.
-    
+
     All fields are optional. If correlation_id is not provided, it will be auto-generated.
     """
 
@@ -209,10 +209,10 @@ CONTEXT_HEADERS = {
 
 def is_valid_uuid_v4(uuid: str) -> bool:
     """Validates that a string is a valid UUID v4.
-    
+
     Args:
         uuid: The string to validate
-        
+
     Returns:
         True if valid UUID v4, False otherwise
     """
@@ -225,10 +225,10 @@ def is_valid_uuid_v4(uuid: str) -> bool:
 
 def is_valid_correlation_id(correlation_id: str) -> bool:
     """Validates that a correlation ID is valid (non-empty string, preferably UUID v4).
-    
+
     Args:
         correlation_id: The correlation ID to validate
-        
+
     Returns:
         True if valid, False otherwise
     """
@@ -237,10 +237,10 @@ def is_valid_correlation_id(correlation_id: str) -> bool:
 
 def validate_execution_context(context: ExecutionContext) -> None:
     """Validates that an ExecutionContext has all required fields.
-    
+
     Args:
         context: The context to validate
-        
+
     Raises:
         ValueError: If context is invalid
     """

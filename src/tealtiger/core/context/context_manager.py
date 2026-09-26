@@ -22,9 +22,9 @@ from .execution_context import (
 
 def generate_uuid_v4() -> str:
     """Generates a cryptographically random UUID v4.
-    
+
     Uses Python's uuid.uuid4() which uses os.urandom() for cryptographic randomness.
-    
+
     Returns:
         UUID v4 string
     """
@@ -33,7 +33,7 @@ def generate_uuid_v4() -> str:
 
 def generate_correlation_id() -> str:
     """Generates a new correlation ID (UUID v4).
-    
+
     Returns:
         Correlation ID string (UUID v4)
     """
@@ -42,9 +42,9 @@ def generate_correlation_id() -> str:
 
 def generate_span_id() -> str:
     """Generates a new span ID (8 bytes hex).
-    
+
     Compatible with OpenTelemetry span ID format.
-    
+
     Returns:
         Span ID string (16 hex characters)
     """
@@ -55,7 +55,7 @@ def generate_span_id() -> str:
 
 def generate_trace_id() -> str:
     """Generates a W3C Trace Context compatible trace ID (32 hex characters).
-    
+
     Returns:
         Trace ID string (32 hex characters)
     """
@@ -66,17 +66,17 @@ def generate_trace_id() -> str:
 
 class ContextManager:
     """ContextManager utility class for creating and managing ExecutionContext.
-    
+
     Provides methods for context creation, propagation, and HTTP header conversion.
     """
 
     @staticmethod
     def create_context(options: Optional[ExecutionContextOptions] = None) -> ExecutionContext:
         """Creates a new ExecutionContext with auto-generated correlation ID.
-        
+
         Args:
             options: Optional context options
-            
+
         Returns:
             New ExecutionContext with generated correlation_id
         """
@@ -120,12 +120,12 @@ class ContextManager:
     @staticmethod
     def from_headers(headers: Dict[str, Union[str, list]]) -> ExecutionContext:
         """Creates a new ExecutionContext from HTTP headers.
-        
+
         Extracts context information from standard headers.
-        
+
         Args:
             headers: HTTP headers dict (key-value pairs)
-            
+
         Returns:
             ExecutionContext extracted from headers
         """
@@ -201,10 +201,10 @@ class ContextManager:
     @staticmethod
     def to_headers(context: ExecutionContext) -> Dict[str, str]:
         """Converts ExecutionContext to HTTP headers for propagation.
-        
+
         Args:
             context: ExecutionContext to convert
-            
+
         Returns:
             HTTP headers dict
         """
@@ -243,14 +243,14 @@ class ContextManager:
         options: Optional[ExecutionContextOptions] = None,
     ) -> ExecutionContext:
         """Propagates context by creating a new child context.
-        
+
         Preserves correlation_id, workflow_id, run_id.
         Generates new span_id and sets parent_span_id.
-        
+
         Args:
             parent_context: Parent ExecutionContext
             options: Optional overrides for child context
-            
+
         Returns:
             New child ExecutionContext
         """
@@ -330,11 +330,11 @@ class ContextManager:
         metadata: Dict[str, Any],
     ) -> ExecutionContext:
         """Enriches an existing context with additional metadata.
-        
+
         Args:
             context: ExecutionContext to enrich
             metadata: Additional metadata to add
-            
+
         Returns:
             New ExecutionContext with enriched metadata
         """
@@ -348,10 +348,10 @@ class ContextManager:
     @staticmethod
     def is_valid(context: ExecutionContext) -> bool:
         """Validates that a context is valid.
-        
+
         Args:
             context: ExecutionContext to validate
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -366,10 +366,10 @@ class ContextManager:
         source: Optional[Union[Dict[str, Union[str, list]], ExecutionContext]] = None
     ) -> ExecutionContext:
         """Extracts context from various sources (headers, existing context, or creates new).
-        
+
         Args:
             source: Headers dict, ExecutionContext, or None
-            
+
         Returns:
             ExecutionContext
         """

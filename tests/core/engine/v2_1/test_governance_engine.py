@@ -24,10 +24,7 @@ from tealtiger.core.engine.v2_1.governance_engine import (
 )
 from tealtiger.core.engine.v2_1.types import (
     GENESIS_RECEIPT_REF,
-    DecisionV21,
-    GovernanceSeal,
 )
-
 
 # ── Helpers ────────────────────────────────────────────────────────
 

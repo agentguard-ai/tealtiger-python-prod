@@ -37,7 +37,7 @@ class BudgetManager:
     def __init__(self, storage: CostStorage):
         """
         Initialize BudgetManager.
-        
+
         Args:
             storage: Cost storage instance for querying spending data
         """
@@ -57,7 +57,7 @@ class BudgetManager:
     ) -> BudgetConfig:
         """
         Create a new budget.
-        
+
         Args:
             name: Budget name
             limit: Budget limit in USD
@@ -66,7 +66,7 @@ class BudgetManager:
             action: Action to take when budget is exceeded (alert, block, throttle)
             scope: Optional scope for budget (agent, project, organization)
             enabled: Whether budget is enabled
-            
+
         Returns:
             Created budget configuration
         """
@@ -94,11 +94,11 @@ class BudgetManager:
     ) -> Optional[BudgetConfig]:
         """
         Update an existing budget.
-        
+
         Args:
             id: Budget ID
             **updates: Fields to update
-            
+
         Returns:
             Updated budget or None if not found
         """
@@ -117,10 +117,10 @@ class BudgetManager:
     def delete_budget(self, id: str) -> bool:
         """
         Delete a budget.
-        
+
         Args:
             id: Budget ID
-            
+
         Returns:
             True if deleted, False if not found
         """
@@ -130,10 +130,10 @@ class BudgetManager:
     def get_budget(self, id: str) -> Optional[BudgetConfig]:
         """
         Get a budget by ID.
-        
+
         Args:
             id: Budget ID
-            
+
         Returns:
             Budget or None if not found
         """
@@ -142,7 +142,7 @@ class BudgetManager:
     def get_all_budgets(self) -> List[BudgetConfig]:
         """
         Get all budgets.
-        
+
         Returns:
             List of all budgets
         """
@@ -155,11 +155,11 @@ class BudgetManager:
     ) -> List[BudgetConfig]:
         """
         Get budgets for a specific scope.
-        
+
         Args:
             scope_type: Scope type (agent, project, organization)
             scope_id: Scope ID
-            
+
         Returns:
             List of budgets matching the scope
         """
@@ -175,11 +175,11 @@ class BudgetManager:
     ) -> BudgetEnforcementResult:
         """
         Check if a cost would exceed any budgets.
-        
+
         Args:
             agent_id: Agent ID
             estimated_cost: Estimated cost in USD
-            
+
         Returns:
             Enforcement result with allowed status and alerts
         """
@@ -221,7 +221,7 @@ class BudgetManager:
     async def record_cost(self, record: CostRecord) -> None:
         """
         Record a cost and update budget tracking.
-        
+
         Args:
             record: Cost record to process
         """
@@ -249,10 +249,10 @@ class BudgetManager:
     async def get_budget_status(self, budget_id: str) -> Optional[BudgetStatus]:
         """
         Get budget status.
-        
+
         Args:
             budget_id: Budget ID
-            
+
         Returns:
             Budget status or None if not found
         """
@@ -292,10 +292,10 @@ class BudgetManager:
     def get_alerts(self, budget_id: str) -> List[CostAlert]:
         """
         Get all alerts for a budget.
-        
+
         Args:
             budget_id: Budget ID
-            
+
         Returns:
             List of alerts
         """
@@ -304,10 +304,10 @@ class BudgetManager:
     def acknowledge_alert(self, alert_id: str) -> bool:
         """
         Acknowledge an alert.
-        
+
         Args:
             alert_id: Alert ID
-            
+
         Returns:
             True if acknowledged, False if not found
         """
@@ -321,7 +321,7 @@ class BudgetManager:
     def clear_alerts(self, budget_id: str) -> None:
         """
         Clear all alerts for a budget.
-        
+
         Args:
             budget_id: Budget ID
         """
@@ -330,10 +330,10 @@ class BudgetManager:
     def _get_relevant_budgets(self, agent_id: str) -> List[BudgetConfig]:
         """
         Get relevant budgets for an agent.
-        
+
         Args:
             agent_id: Agent ID
-            
+
         Returns:
             List of relevant budgets
         """
@@ -348,10 +348,10 @@ class BudgetManager:
     def _get_period_dates(self, period: BudgetPeriod) -> tuple:
         """
         Get period start and end dates.
-        
+
         Args:
             period: Budget period
-            
+
         Returns:
             Tuple of (start_date, end_date)
         """
@@ -380,12 +380,12 @@ class BudgetManager:
     ) -> CostAlert:
         """
         Create an alert.
-        
+
         Args:
             budget: Budget configuration
             threshold: Threshold percentage
             current_spending: Current spending amount
-            
+
         Returns:
             Created alert
         """
@@ -410,7 +410,7 @@ class BudgetManager:
     def _add_alert(self, budget_id: str, alert: CostAlert) -> None:
         """
         Add an alert to the budget.
-        
+
         Args:
             budget_id: Budget ID
             alert: Alert to add

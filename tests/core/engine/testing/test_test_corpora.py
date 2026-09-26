@@ -11,7 +11,6 @@ Tests for starter test corpora:
 - Cost limit test cases
 """
 
-import pytest
 
 from tealtiger.core.engine.testing import TestCorpora
 from tealtiger.core.engine.types import DecisionAction, ReasonCode
