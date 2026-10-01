@@ -11,7 +11,7 @@
 
   [![PyPI version](https://badge.fury.io/py/tealtiger.svg)](https://pypi.org/project/tealtiger/)
   [![Python versions](https://img.shields.io/pypi/pyversions/tealtiger.svg)](https://pypi.org/project/tealtiger/)
-  [![Tests](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python/actions/workflows/test.yml)
+  [![Tests](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
   [![v1.4.0](https://img.shields.io/badge/version-v1.4.0-teal.svg)](https://pypi.org/project/tealtiger/)
@@ -288,7 +288,7 @@ TealTiger v1.2.0 covers **7 out of 10** OWASP ASIs through its SDK-only architec
 | ASI09 | Harmful Content Generation | 🔧 Support | TealGuard |
 | ASI10 | Rogue Agent Behavior | 🟢 Full | TealAudit |
 
-📖 [Complete OWASP ASI Mapping](../../OWASP-AGENTIC-TOP10-TEALTIGER-MAPPING.md) | [OWASP Top 10 for Agentic Applications](https://owasp.org/www-project-top-10-for-agentic-applications/)
+📖 [OWASP Top 10 for Agentic Applications](https://owasp.org/www-project-top-10-for-agentic-applications/)
 
 ## 🎯 Use Cases
 
@@ -324,7 +324,7 @@ Apache 2.0 — see [LICENSE](https://github.com/agentguard-ai/tealtiger-python-p
 - **LinkedIn**: https://www.linkedin.com/company/tealtiger/
 - **X (Twitter)**: https://x.com/TealtigerAI
 - **Contact**: reachout@tealtiger.ai
-- **Issues**: https://github.com/agentguard-ai/tealtiger/issues
+- **Issues**: https://github.com/agentguard-ai/tealtiger-python-prod/issues
 
 ---
 
