@@ -7,6 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - unreleased
+
+### Added
+- **`PolicyHotSwapManager`** (`tealtiger.core.engine.v1_3`) — runtime validation and
+  hot-swapping of governance policy bundles, ported from the TypeScript core's
+  `src/core/engine/v1.3/policy-hotswap.ts`. Provides `validate_bundle()` (schema,
+  integrity hash, capability negotiation, signature), `load_policy()`
+  (validate-then-swap, retaining the previous bundle on failure),
+  `compute_bundle_hash()`, and event emission with listener isolation.
+- **FREEZE rule accumulation** — rules persist across hot-swaps and are never removed
+  by a bundle that omits them.
+- Bundle hashes are **byte-compatible with the TypeScript core**. Verified by computing
+  the digest for an identical bundle in both languages; the digest is pinned in
+  `test_bundle_hash_matches_typescript_core` so interop cannot regress silently.
+
+### Changed (behaviour change — read before upgrading)
+- **`PolicyTester.test_policy()` now raises `NotImplementedError`.** It previously
+  returned `decision="allow"` for every input, including policies whose rules denied
+  the request — a published governance API handing out unconditional passes. It never
+  evaluated the policy it was given.
+
+  Technically this is a breaking change, but no caller could have been relying on a
+  correct result. **Migration:** use `PolicyTestRunner`
+  (`tealtiger.core.engine.testing.PolicyTester`, re-exported under a clearer name),
+  which was already exported and evaluates test cases against a real engine:
+
+  ```python
+  from tealtiger import PolicyTestRunner
+  runner = PolicyTestRunner(engine)
+  report = runner.run_suite(suite)
+  ```
+
+### Fixed
+- Cleared ~1,000 accumulated `ruff` findings across 76 files; `ruff check src tests`
+  now passes. Three were fixed by hand so those rules stay active repo-wide rather than
+  being globally disabled for one instance each.
+- **Pinned `ruff` to `>=0.15,<0.16`.** The previous open-ended `>=0.0.285` floor meant
+  CI silently adopted every new ruff release and its new default rules, so the lint gate
+  drifted stricter over time without anyone changing it — which is how those findings
+  accumulated while the job was nominally green.
+- `C901` complexity is now ratcheted at `max-complexity = 34` (the current worst
+  function) rather than disabled, so nothing can get worse. `B904` and `F841` are
+  deferred with counts recorded in `pyproject.toml`.
+
+### Repository metadata
+- Corrected the CI badge and issue links, which pointed at
+  `agentguard-ai/tealtiger-python` and `agentguard-ai/tealtiger` — neither of which
+  exists. The source repository is `agentguard-ai/tealtiger-python-prod`.
+- Replaced a relative link to the OWASP mapping that resolved to nothing when rendered
+  on PyPI.
+
+## [1.4.1] - 2026-09-12
+
+> **Reconstructed after the fact.** This release was published to PyPI on 2026-09-12
+> but left no record in this repository: no git tag, no GitHub Release, no version bump
+> on `main` (which still read `1.4.0` until 1.5.0), and no changelog entry. The content
+> below is inferred from the commits immediately preceding the upload and should be
+> treated as the best available account rather than an authoritative one.
+>
+> See "Release process" in the 1.5.0 notes above for why this could happen.
+
+### Fixed
+- Exported `TealEngine`, `TealGuard`, `TealAudit` and `TealCircuit` at the package top
+  level (PR #29, merged 2026-09-10) — previously these required importing from their
+  submodules.
+
+## [1.3.0] - 2026-05-18
+
+> **Undocumented.** Published to PyPI on 2026-05-18 with no changelog entry and no git
+> tag. Contents were not reconstructed; the commit range between `v1.2.0` and the 1.4.0
+> release commit (`107fb3e`) is the only available record.
+
 ## [1.4.0] - 2026-06-15
 
 ### Added — observe() Zero-Config Instrumentation

@@ -96,7 +96,31 @@ from tealtiger.observe.errors import FrozenAgentError, UnsupportedProviderError
 from tealtiger.policy import PolicyBuilder, PolicyTester
 from tealtiger.types import ExecutionResult, SecurityDecision
 
-__version__ = "1.4.0"
+# Reports the version of the INSTALLED tealtiger distribution, read from package
+# metadata, so it cannot disagree with what the user actually installed.
+#
+# This replaces a hardcoded literal. Two hardcoded version strings existed — this
+# one and `version` in pyproject.toml — which meant two places to bump and two
+# places to drift. They did drift: 1.4.1 shipped to PyPI while both still read
+# 1.4.0.
+#
+# Caveat for contributors: in a source checkout on sys.path (e.g.
+# PYTHONPATH=src) alongside an older installed copy, this reflects the INSTALLED
+# version, not the tree you are editing. That is intentional — it describes the
+# distribution, not the working directory. `pyproject.toml` is the source of
+# truth for what the next release will be.
+try:
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _pkg_version
+
+    try:
+        __version__ = _pkg_version("tealtiger")
+    except PackageNotFoundError:  # pragma: no cover - not installed at all
+        # No metadata to read. Report that honestly rather than inventing a
+        # number that could disagree with pyproject.toml.
+        __version__ = "0.0.0+unknown"
+except ImportError:  # pragma: no cover - importlib.metadata unavailable
+    __version__ = "0.0.0+unknown"
 __all__ = [
     # Core client
     "TealTiger",
