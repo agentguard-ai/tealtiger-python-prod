@@ -1,5 +1,7 @@
 """Tests for policy utilities."""
 
+import pytest
+
 from tealtiger import PolicyBuilder, PolicyTester
 
 
@@ -45,8 +47,18 @@ def test_policy_builder_chaining():
     assert len(policy.rules) == 2
 
 
-def test_policy_tester():
-    """Test policy tester."""
+def test_policy_tester_raises_not_implemented():
+    """PolicyTester.test_policy must fail loudly, not return a false pass.
+
+    This method never evaluated the policy it was handed: it returned
+    decision="allow" for every input. The previous version of this test only
+    asserted `result.decision is not None` and `result.reason is not None`,
+    which the hardcoded "allow" satisfied trivially — so the test passed while
+    the feature did nothing.
+
+    A governance check that cannot fail is worse than one that is absent, so the
+    method now raises, and this test pins that contract.
+    """
     tester = PolicyTester()
     policy = (
         PolicyBuilder()
@@ -54,17 +66,34 @@ def test_policy_tester():
         .description("Test")
         .add_rule(
             condition={"tool_name": "test"},
-            action="allow",
-            reason="Test"
+            action="deny",
+            reason="Denied by rule"
         )
         .build()
     )
 
-    result = tester.test_policy(
-        policy=policy,
-        request={"tool_name": "test", "parameters": {}}
-    )
+    with pytest.raises(NotImplementedError) as excinfo:
+        tester.test_policy(
+            policy=policy,
+            request={"tool_name": "test", "parameters": {}}
+        )
 
-    assert result.decision is not None
-    assert result.reason is not None
+    # The error must point the caller at the working implementation.
+    assert "PolicyTestRunner" in str(excinfo.value)
+
+
+def test_policy_test_runner_is_a_different_class_from_the_stub():
+    """The working tester is exported, and is not the stub.
+
+    `tealtiger.PolicyTestRunner` is `tealtiger.core.engine.testing.PolicyTester`
+    re-exported under a clearer name. Guard against the two being confused
+    again: the stub takes no engine, the real one requires one.
+    """
+    from tealtiger import PolicyTestRunner
+
+    assert PolicyTestRunner is not PolicyTester
+
+    # The real runner is engine-backed; constructing it without one is an error.
+    with pytest.raises(TypeError):
+        PolicyTestRunner()
 

@@ -8,6 +8,13 @@ When no v1.3-specific features are configured, behavior is identical to v1.2.
 """
 
 from .engine import TealEngineV13, V13ReasonCode
+from .policy_hotswap import (
+    SDK_CAPABILITIES,
+    BundleValidationResult,
+    HotSwapEventType,
+    LoadPolicyResult,
+    PolicyHotSwapManager,
+)
 from .types import (
     AgentAttestation,
     AttestationConfig,
@@ -70,4 +77,10 @@ __all__ = [
     # Engine
     "TealEngineV13",
     "V13ReasonCode",
+    # Policy bundle hot-swap
+    "PolicyHotSwapManager",
+    "BundleValidationResult",
+    "LoadPolicyResult",
+    "HotSwapEventType",
+    "SDK_CAPABILITIES",
 ]
