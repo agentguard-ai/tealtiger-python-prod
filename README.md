@@ -14,15 +14,28 @@
   [![Tests](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
-  [![v1.4.0](https://img.shields.io/badge/version-v1.4.0-teal.svg)](https://pypi.org/project/tealtiger/)
+  [![v1.5.0](https://img.shields.io/badge/version-v1.5.0-teal.svg)](https://pypi.org/project/tealtiger/)
   [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/X2ePf8QAj)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
 
-## What's New in v1.4.0 — Observe Mode (Zero-Config Adoption)
+## What's New in v1.5.0
 
-TealTiger v1.4 introduces **`observe()` — one line to instrument any LLM client** with full visibility and an instant kill switch:
+- **`PolicyHotSwapManager`** (`tealtiger.core.engine.v1_3`) — validate and hot-swap
+  governance policy bundles at runtime. Schema, integrity hash, capability
+  negotiation and signature checks; FREEZE rules persist across swaps and are never
+  removed by a bundle that omits them. Bundle hashes are byte-compatible with the
+  TypeScript SDK.
+- **`PolicyTester.test_policy()` now raises instead of returning a false pass.** It
+  previously returned `decision="allow"` for every input, including policies that
+  denied the request. Use **`PolicyTestRunner`** for real policy testing — see
+  [Policy Test Harness](#policy-test-harness) below.
+- Lint gate cleaned and `ruff` pinned, so it stops drifting stricter on its own.
+
+## Observe Mode (Zero-Config Adoption)
+
+**`observe()` — one line to instrument any LLM client** with full visibility and an instant kill switch:
 
 - **`observe(client)`** — Zero-config proxy wrapping for any of 12 supported LLM providers
 - **Automatic Cost Tracking** — Per-request, per-session, per-agent cost accumulation across all providers
@@ -34,8 +47,7 @@ TealTiger v1.4 introduces **`observe()` — one line to instrument any LLM clien
 - **Under 5ms overhead** — All instrumentation is in-process, deterministic, and offline-capable
 
 ```bash
-pip install tealtiger==1.4.0
-```
+pip install tealtiger
 ```
 
 ## 🚀 Quick Start
@@ -74,17 +86,29 @@ asyncio.run(main())
 
 ## 🌐 Supported Providers
 
-95%+ market coverage with 7 LLM providers:
+Three clients are importable from the package root; the rest import from
+`tealtiger.clients`.
 
-| Provider | Client | Models | Features |
-|----------|--------|--------|----------|
-| **OpenAI** | `TealOpenAI` | GPT-4, GPT-3.5 Turbo | Chat, Completions, Embeddings |
-| **Anthropic** | `TealAnthropic` | Claude 3, Claude 2 | Chat, Streaming |
-| **Google** | `TealGemini` | Gemini Pro, Ultra | Multimodal, Safety Settings |
-| **AWS** | `TealBedrock` | Claude, Titan, Jurassic, Command, Llama | Multi-model, Regional |
-| **Azure** | `TealAzureOpenAI` | GPT-4, GPT-3.5 | Deployment-based, Azure AD |
-| **Mistral** | `TealMistral` | Large, Medium, Small, Mixtral | EU Data Residency, GDPR |
-| **Cohere** | `TealCohere` | Command, Embed | RAG, Citations, Connectors |
+| Provider | Client | Import from | Models |
+|----------|--------|-------------|--------|
+| **OpenAI** | `TealOpenAI` | `tealtiger` | GPT-4, GPT-3.5 Turbo |
+| **Anthropic** | `TealAnthropic` | `tealtiger` | Claude 3, Claude 2 |
+| **Azure** | `TealAzureOpenAI` | `tealtiger` | GPT-4, GPT-3.5 |
+| **Google** | `TealGemini` | `tealtiger.clients` | Gemini Pro, Ultra |
+| **AWS** | `TealBedrock` | `tealtiger.clients` | Claude, Titan, Jurassic, Command, Llama |
+| **Cohere** | `TealCohere` | `tealtiger.clients` | Command, Embed |
+| **Mistral** | `TealMistral` | ⚠️ see note | Large, Medium, Small, Mixtral |
+
+```python
+from tealtiger import TealOpenAI
+from tealtiger.clients import TealGemini
+```
+
+> ⚠️ **`TealMistral` is currently broken.** It imports the `mistralai` v0.x API
+> (`from mistralai.client import MistralClient`), which v1.0 removed. Because the
+> dependency floor is unbounded (`mistralai>=0.1.0`), any current `mistralai`
+> install raises `ImportError`. Tracked separately — do not rely on this client
+> until it is ported to the v1 API.
 
 ## 🛡️ Key Features
 
@@ -135,7 +159,7 @@ Client-side guardrails that run in milliseconds with no server dependency:
 ```python
 from tealtiger import GuardrailEngine, PIIDetectionGuardrail, PromptInjectionGuardrail, ContentModerationGuardrail
 
-engine = GuardrailEngine(mode="parallel", timeout=5000)
+engine = GuardrailEngine(parallel_execution=True, timeout=5000)
 
 engine.register_guardrail(PIIDetectionGuardrail(action="redact"))
 engine.register_guardrail(PromptInjectionGuardrail(sensitivity="high"))
@@ -156,9 +180,9 @@ Cascading failure prevention with automatic failover:
 from tealtiger import TealCircuit
 
 circuit = TealCircuit(
-    failure_threshold=5,
-    reset_timeout=30000,
-    monitor_interval=10000
+    failure_threshold=5,      # consecutive failures before opening
+    timeout=30000,            # ms to wait before attempting to close
+    half_open_requests=3      # successes in half-open before closing
 )
 
 # Wraps provider calls with circuit breaker protection
@@ -172,16 +196,17 @@ response = await circuit.execute(
 Versioned audit events with security-by-default PII redaction:
 
 ```python
-from tealtiger import TealAudit, RedactionLevel, FileOutput
+from tealtiger import TealAudit, RedactionLevel
+from tealtiger.core.audit.teal_audit import AuditConfig, ConsoleOutput
 
 audit = TealAudit(
-    outputs=[FileOutput("./audit.log")],
-    config={
-        "input_redaction": RedactionLevel.HASH,    # SHA-256 hash + size (default)
-        "output_redaction": RedactionLevel.HASH,
-        "detect_pii": True,
-        "debug_mode": False
-    }
+    outputs=[ConsoleOutput()],   # or CustomOutput for your own sink
+    config=AuditConfig(
+        input_redaction=RedactionLevel.HASH,    # SHA-256 hash + size (default)
+        output_redaction=RedactionLevel.HASH,
+        detect_pii=True,
+        debug_mode=False,
+    ),
 )
 ```
 
@@ -192,13 +217,13 @@ audit = TealAudit(
 End-to-end request tracking across all components:
 
 ```python
-from tealtiger import ContextManager
+from tealtiger import ContextManager, ExecutionContextOptions
 
-context = ContextManager.create_context(
+context = ContextManager.create_context(ExecutionContextOptions(
     tenant_id="acme-corp",
-    app="customer-support",
-    env="production"
-)
+    application="customer-support",   # not `app`
+    environment="production",         # not `env`
+))
 
 # Context propagates through TealEngine, TealAudit, and all providers
 response = await client.chat.completions.create(
@@ -217,10 +242,14 @@ events = await audit.query(correlation_id=context.correlation_id)
 
 Validate policy behavior before production deployment:
 
-```python
-from tealtiger import PolicyTester, TestCorpora
+> **Use `PolicyTestRunner`, not `PolicyTester`.** `PolicyTester` is a deprecated
+> placeholder that never evaluated anything — as of v1.5.0 it raises
+> `NotImplementedError` rather than returning a misleading `allow`.
 
-tester = PolicyTester(engine)
+```python
+from tealtiger import PolicyTestRunner, TestCorpora
+
+tester = PolicyTestRunner(engine)
 report = tester.run_suite({
     "name": "Customer Support Policy Tests",
     "tests": [
@@ -244,10 +273,10 @@ python -m tealtiger.cli.test ./policies/*.test.json --coverage --format=junit --
 
 ### Cost Tracking & Budget Management
 
-Track costs across 50+ models and enforce spending limits:
+Track costs across 49 models and enforce spending limits:
 
 ```python
-from tealtiger import CostTracker, BudgetManager, InMemoryCostStorage
+from tealtiger import CostTracker, BudgetManager, InMemoryCostStorage, TokenUsage
 
 storage = InMemoryCostStorage()
 tracker = CostTracker()
@@ -262,8 +291,12 @@ budget_manager.create_budget({
     "enabled": True
 })
 
-# Estimate before request
-estimate = tracker.estimate_cost("gpt-4", {"input_tokens": 1000, "output_tokens": 500}, "openai")
+# Estimate before request — takes a TokenUsage, not a dict
+estimate = tracker.estimate_cost(
+    "gpt-4",
+    TokenUsage(input_tokens=1000, output_tokens=500, total_tokens=1500),
+    "openai",
+)
 
 # Check budget
 check = await budget_manager.check_budget("agent-123", estimate)
@@ -273,7 +306,7 @@ if not check.allowed:
 
 ## 🛡️ OWASP Top 10 for Agentic Applications Coverage
 
-TealTiger v1.2.0 covers **7 out of 10** OWASP ASIs through its SDK-only architecture:
+TealTiger covers **7 out of 10** OWASP ASIs through its SDK-only architecture:
 
 | ASI | Vulnerability | Coverage | Components |
 |-----|--------------|----------|------------|
@@ -317,7 +350,8 @@ Apache 2.0 — see [LICENSE](https://github.com/agentguard-ai/tealtiger-python-p
 ## 🔗 Links
 
 - **PyPI**: https://pypi.org/project/tealtiger/
-- **GitHub**: https://github.com/agentguard-ai/tealtiger
+- **GitHub (this SDK)**: https://github.com/agentguard-ai/tealtiger-python-prod
+- **GitHub (monorepo)**: https://github.com/agentguard-ai/tealtiger
 - **TypeScript SDK**: https://www.npmjs.com/package/tealtiger
 - **Documentation**: https://docs.tealtiger.ai
 - **Discord**: https://discord.gg/X2ePf8QAj
