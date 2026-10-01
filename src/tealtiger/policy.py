@@ -81,25 +81,50 @@ class PolicyBuilder:
 
 
 class PolicyTester:
-    """Utility for testing policies."""
+    """Unimplemented placeholder. Use ``PolicyTestRunner`` instead.
+
+    .. deprecated::
+       This class never had a working implementation. Use
+       :class:`tealtiger.PolicyTestRunner` (that is
+       ``tealtiger.core.engine.testing.PolicyTester``, re-exported under the
+       clearer name) which evaluates test cases against a real engine.
+    """
 
     def test_policy(
         self,
         policy: Policy,
         request: Dict[str, Any],
     ) -> PolicyTestResult:
-        """Test a policy against a request.
+        """Not implemented. Raises :class:`NotImplementedError`.
 
         Args:
             policy: Policy to test
             request: Request to test against
 
-        Returns:
-            PolicyTestResult with decision and reasoning
+        Raises:
+            NotImplementedError: Always. This method never evaluated the policy
+                it was given.
+
+        .. note::
+           Until this raised, it returned ``decision="allow"`` for **every**
+           input, including policies whose rules denied the request. Any caller
+           relying on that return value was receiving a false pass from a
+           governance check — the most dangerous possible failure mode for this
+           API, so it now fails loudly instead.
+
+           Use :class:`tealtiger.PolicyTestRunner` for real policy testing::
+
+               from tealtiger import PolicyTestRunner
+               from tealtiger.core.engine.testing.types import PolicyTestCase
+
+               runner = PolicyTestRunner(engine)
+               result = runner.run_test(PolicyTestCase(...))
         """
-        # TODO: Implement policy testing logic
-        return PolicyTestResult(
-            decision="allow",
-            reason="Policy testing not yet implemented",
-            matched_rules=[],
+        raise NotImplementedError(
+            "PolicyTester.test_policy was never implemented and previously "
+            "returned decision='allow' for every input, regardless of the "
+            "policy. Use tealtiger.PolicyTestRunner instead, which evaluates "
+            "test cases against a real engine: "
+            "PolicyTestRunner(engine).run_test(PolicyTestCase(...)). "
+            "See also run_suite() and run_from_file()."
         )
