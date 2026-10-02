@@ -81,7 +81,14 @@ class PolicyTester:
         Returns:
             Test result with pass/fail status and details
         """
-        start_time = time.time()
+        # perf_counter, not time(): time() is wall-clock with ~15.6ms
+        # granularity on Windows, so a sub-millisecond policy evaluation
+        # measured exactly 0.0 ms — reported to callers and written into the
+        # JUnit XML as 0.000. It is also subject to NTP and DST adjustments and
+        # can run backwards, yielding negative durations. perf_counter is
+        # monotonic and high-resolution, and is the documented way to measure
+        # elapsed time.
+        start_time = time.perf_counter()
 
         try:
             # Execute policy evaluation
@@ -99,7 +106,7 @@ class PolicyTester:
                 decision, test_case.expected
             )
 
-            execution_time = (time.time() - start_time) * 1000  # Convert to ms
+            execution_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
 
             return PolicyTestResult(
                 name=test_case.name,
@@ -111,7 +118,7 @@ class PolicyTester:
             )
 
         except Exception as e:
-            execution_time = (time.time() - start_time) * 1000
+            execution_time = (time.perf_counter() - start_time) * 1000
 
             return PolicyTestResult(
                 name=test_case.name,
@@ -135,7 +142,7 @@ class PolicyTester:
         Returns:
             Comprehensive test report with results and coverage
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         results: List[PolicyTestResult] = []
 
         # Reset coverage tracking for this suite
@@ -151,7 +158,7 @@ class PolicyTester:
         passed = sum(1 for r in results if r.passed)
         failed = sum(1 for r in results if not r.passed)
         success_rate = passed / total if total > 0 else 0.0
-        total_time = (time.time() - start_time) * 1000
+        total_time = (time.perf_counter() - start_time) * 1000
 
         # Calculate coverage
         coverage = self._calculate_coverage()
