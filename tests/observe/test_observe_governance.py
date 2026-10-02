@@ -7,6 +7,7 @@ governance=False preserves Phase 1 behavior, and error cases are handled.
 Requirements: 8.1, 8.3, 8.4, 8.7
 """
 
+import importlib
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -18,6 +19,24 @@ import pytest
 
 from tealtiger.observe import SealConfigurationError, observe
 from tealtiger.observe.types import ProviderSignature
+
+# The module that defines detect_provider, resolved through sys.modules rather
+# than by attribute access.
+#
+# `patch("tealtiger.observe.observe.detect_provider")` cannot be used here.
+# mock resolves a string target by importing the first component and then
+# walking attributes, and the name `observe` is bound to the observe() *function*
+# on both `tealtiger` (__init__.py: `from tealtiger.observe import observe`) and
+# `tealtiger.observe` (its __init__.py: `from tealtiger.observe.observe import
+# observe`). So the walk reaches the function and fails with
+# "'function' object has no attribute 'observe'" — the function shadows the
+# submodule of the same name.
+#
+# Python 3.11+ ships a mock that imports the longest importable prefix first, so
+# it resolves the module and the string form happens to work there. On 3.10 it
+# does not, which made the entire 3.10 matrix job fail while 3.11 and 3.12
+# passed. import_module is unambiguous on every version.
+_observe_module = importlib.import_module("tealtiger.observe.observe")
 
 # ---------------------------------------------------------------------------
 # Mock Infrastructure
@@ -81,7 +100,7 @@ class MockOpenAIClient:
 # ---------------------------------------------------------------------------
 
 
-@patch("tealtiger.observe.observe.detect_provider")
+@patch.object(_observe_module, "detect_provider")
 class TestGovernanceEnabledProducesDecisions:
     """Test that governance=True produces v2.1 decisions after intercepted calls."""
 
@@ -159,7 +178,7 @@ class TestGovernanceEnabledProducesDecisions:
         assert decision.module == "GovernanceEngineV21"
 
 
-@patch("tealtiger.observe.observe.detect_provider")
+@patch.object(_observe_module, "detect_provider")
 class TestGovernanceDisabledPreservesPhase1:
     """Test that governance=False returns empty get_decisions() list."""
 
@@ -221,7 +240,7 @@ class TestGovernanceDisabledPreservesPhase1:
         assert response is not None
 
 
-@patch("tealtiger.observe.observe.detect_provider")
+@patch.object(_observe_module, "detect_provider")
 class TestMissingSealSecretRaisesError:
     """Test error handling for missing seal_secret."""
 
@@ -265,7 +284,7 @@ class TestMissingSealSecretRaisesError:
         assert raised is True
 
 
-@patch("tealtiger.observe.observe.detect_provider")
+@patch.object(_observe_module, "detect_provider")
 class TestMultipleCallsProduceSequentialDecisions:
     """Test that multiple calls produce sequential decisions with incrementing seq and running_count."""
 
