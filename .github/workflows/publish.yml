@@ -7,28 +7,100 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
+
+    # The release tag is the human's statement of what is being published.
+    # pyproject.toml#version is what PyPI will actually publish under. If they
+    # disagree, the tag is lying about the artifact — stop before anything ships.
+    #
+    # This is not hypothetical: PyPI served 1.4.1 while the repo read 1.4.0,
+    # because releases were cut by hand and nothing compared the two. A PyPI
+    # version cannot be reused or replaced once uploaded, so this has to be
+    # caught before the upload, not after.
+    #
+    # __version__ is deliberately NOT checked against a literal here: it is
+    # derived at runtime via importlib.metadata, so it cannot drift from the
+    # installed distribution. It is verified end-to-end further down by
+    # importing the built wheel.
+    - name: Verify version consistency (tag, pyproject.toml)
+      run: |
+        set -euo pipefail
+        TAG="${GITHUB_REF_NAME#v}"
+        PKG="$(python -c "
+        import tomllib, pathlib
+        print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])
+        ")"
+        echo "release tag      : $TAG"
+        echo "pyproject.toml   : $PKG"
+        if [ "$TAG" != "$PKG" ]; then
+          echo "::error::Release tag ($TAG) does not match pyproject.toml version ($PKG). Nothing published."
+          exit 1
+        fi
+        echo "OK: tag and pyproject.toml agree."
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install -e ".[dev]"
         pip install build twine
-    
+
+    # test.yml runs the suite on push and pull_request, but this workflow fires
+    # on `release: created`, and a GitHub Release can be cut from any tag — in
+    # this repo several past releases were published manually and never went
+    # through CI at all. Without this step, a release is an unverified upload to
+    # an immutable registry.
+    #
+    # The TypeScript side proved the value: its release ran tests, and that is
+    # the only reason a stale version constant was caught before 1.6.0 shipped.
+    - name: Run linter
+      run: |
+        ruff check src tests
+
+    - name: Run tests
+      run: |
+        pytest
+
     - name: Build package
       run: |
         python -m build
-    
-    - name: Check package
+
+    # --strict fails on malformed metadata and on a README that will not render
+    # on PyPI. The README *is* the PyPI project description and PyPI freezes it
+    # per release, so a rendering failure cannot be fixed without burning
+    # another version number.
+    - name: Check package metadata and README rendering
       run: |
-        twine check dist/*
-    
+        twine check --strict dist/*
+
+    # Verify the artifact that is about to be uploaded, rather than the source
+    # tree it came from. This closes the loop on the importlib.metadata version
+    # path: install the built wheel into a clean environment and confirm the
+    # version it reports matches the tag being released.
+    - name: Verify built artifact reports the released version
+      run: |
+        set -euo pipefail
+        TAG="${GITHUB_REF_NAME#v}"
+        python -m venv /tmp/verify-venv
+        /tmp/verify-venv/bin/pip install --quiet --upgrade pip
+        WHEEL="$(ls dist/*.whl)"
+        echo "verifying wheel: $WHEEL"
+        /tmp/verify-venv/bin/pip install --quiet "$WHEEL"
+        GOT="$(/tmp/verify-venv/bin/python -c 'import tealtiger; print(tealtiger.__version__)')"
+        echo "release tag            : $TAG"
+        echo "wheel __version__      : $GOT"
+        if [ "$GOT" != "$TAG" ]; then
+          echo "::error::Built wheel reports __version__ $GOT but the release tag is $TAG. Nothing published."
+          exit 1
+        fi
+        echo "OK: the wheel reports the version being released."
+
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
