@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.5.0] - unreleased
+## [1.5.0] - 2026-10-03
 
 ### Added
 - **`PolicyHotSwapManager`** (`tealtiger.core.engine.v1_3`) — runtime validation and
@@ -73,12 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   level (PR #29, merged 2026-09-10) — previously these required importing from their
   submodules.
 
-## [1.3.0] - 2026-05-18
-
-> **Undocumented.** Published to PyPI on 2026-05-18 with no changelog entry and no git
-> tag. Contents were not reconstructed; the commit range between `v1.2.0` and the 1.4.0
-> release commit (`107fb3e`) is the only available record.
-
 ## [1.4.0] - 2026-06-15
 
 ### Added — observe() Zero-Config Instrumentation
@@ -89,6 +83,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PII detection (REPORT_ONLY)** — Scans request/response payloads for email, phone, SSN, and credit card patterns without blocking.
 - **Structured audit logging** — Every request/response/error/tool-call produces a typed event with correlation IDs and HASH redaction.
 - **Sync + async support** — Automatically detects and wraps both sync and async provider methods.
+
+## [1.3.0] - 2026-05-18
+
+> **Undocumented.** Published to PyPI on 2026-05-18 with no changelog entry and no git
+> tag. Contents were not reconstructed; the commit range between `v1.2.0` and the 1.4.0
+> release commit (`107fb3e`) is the only available record.
 
 ## [1.2.0] - 2026-05-04
 
