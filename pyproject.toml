@@ -7,7 +7,14 @@ name = "tealtiger"
 version = "1.5.0"
 description = "TealTiger - AI agent security platform with guardrails, cost tracking, and policy management for LLM applications"
 readme = "README.md"
-requires-python = ">=3.8"
+# Floor raised from 3.8 to 3.9 because the package never actually worked on
+# 3.8. Three modules on the `import tealtiger` path use PEP 585 builtin
+# generics (`tuple[...]`, `set[str]`, `list[str]`) without
+# `from __future__ import annotations`, so they are evaluated at import time and
+# raise TypeError on 3.8. The 3.8 matrix job had been failing because of this;
+# the metadata claimed support that no 3.8 user could have used. 3.8 has also
+# been end-of-life since October 2024.
+requires-python = ">=3.9"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "TealTiger Team", email = "reachout@tealtiger.ai"}
@@ -38,7 +45,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -80,6 +86,23 @@ dev = [
     "ruff>=0.15,<0.16",
 ]
 
+# Optional integration SDKs. These were previously undeclared anywhere — not as
+# dependencies and not as extras — while tealtiger.integrations imported all of
+# them eagerly, so the entire subpackage was unimportable on a normal install
+# and there was no documented way to get the right packages. Upper bounds are
+# deliberate: an unbounded floor is how the mistralai client broke (it still
+# imports `mistralai.client`, removed in v1.0, under a `mistralai>=0.1.0` floor).
+agentops = ["agentops>=0.3,<0.5"]
+langfuse = ["langfuse>=2.0,<4.0"]
+opik = ["opik>=1.0,<2.0"]
+google-adk = ["google-adk>=0.1,<2.0"]
+integrations = [
+    "agentops>=0.3,<0.5",
+    "langfuse>=2.0,<4.0",
+    "opik>=1.0,<2.0",
+    "google-adk>=0.1,<2.0",
+]
+
 [project.urls]
 Homepage = "https://tealtiger.ai"
 Documentation = "https://docs.tealtiger.ai"
@@ -98,7 +121,9 @@ addopts = "-v --cov=tealtiger --cov-report=term-missing --cov-report=html"
 asyncio_mode = "auto"
 
 [tool.mypy]
-python_version = "3.8"
+# Must track requires-python. While this said 3.8, mypy was type-checking
+# against a version the package could not even be imported on.
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

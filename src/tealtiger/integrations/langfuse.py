@@ -23,11 +23,11 @@ from typing import Any, Dict, Optional
 
 try:
     from langfuse import Langfuse
-except ImportError:
+except ImportError as exc:  # pragma: no cover - depends on optional SDK
     raise ImportError(
         "langfuse is required for this integration. "
-        "Install it with: pip install langfuse"
-    )
+        "Install it with: pip install 'tealtiger[langfuse]'"
+    ) from exc
 
 
 class LangfuseGovernanceExporter:

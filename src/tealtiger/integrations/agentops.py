@@ -25,11 +25,15 @@ from typing import Any, Dict, List
 try:
     import agentops
     from agentops import ActionEvent, ErrorEvent
-except ImportError:
+except ImportError as exc:  # pragma: no cover - depends on optional SDK
+    # `from exc` matters here: without it, an agentops that is installed but
+    # broken (incompatible version, failed transitive import) is reported as if
+    # it were simply absent, sending people to re-run an install that already
+    # succeeded. This is the failure mode that hid the mistralai breakage.
     raise ImportError(
         "agentops is required for this integration. "
-        "Install it with: pip install agentops"
-    )
+        "Install it with: pip install 'tealtiger[agentops]'"
+    ) from exc
 
 
 class AgentOpsGovernanceReporter:

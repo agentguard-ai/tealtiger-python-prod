@@ -29,11 +29,11 @@ from typing import Any, List
 
 try:
     from opik.evaluation.metrics import base_metric, score_result
-except ImportError:
+except ImportError as exc:  # pragma: no cover - depends on optional SDK
     raise ImportError(
         "opik is required for this integration. "
-        "Install it with: pip install opik"
-    )
+        "Install it with: pip install 'tealtiger[opik]'"
+    ) from exc
 
 
 class GovernanceAccuracyMetric(base_metric.BaseMetric):
