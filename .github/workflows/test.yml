@@ -60,11 +60,49 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    # pip-audit replaces `safety check`, which had three problems.
+    #
+    # 1. It audited the wrong thing. `safety check` scans the ambient
+    #    environment, and this job never installed the project, so it was
+    #    scanning the runner's Python image plus safety's own dependency tree:
+    #      -> /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages
+    #         Found and scanned 44 packages
+    #    None of openai, anthropic, pydantic, boto3, cohere or mistralai was
+    #    ever looked at. The job's last failure was setuptools 79.0.1
+    #    (CVE-2026-59890), which GitHub preinstalls on the runner and which is
+    #    neither a runtime nor a build dependency here — this project builds
+    #    with hatchling and setuptools is absent from its dependency closure.
+    #    The gate's result depended on the runner image, not on our code.
+    #
+    # 2. `safety check` is deprecated and unsupported past 01 June 2024; it
+    #    printed that banner on every run. Its successor, `safety scan`,
+    #    requires a SAFETY_API_KEY secret.
+    #
+    # 3. Scoping it correctly would have made it crash rather than pass:
+    #    with this project's dependencies installed, safety 3.8.1 dies with
+    #    "TypeError: 'Timeout' object cannot be interpreted as an integer".
+    #    anthropic, openai and mistralai all require httpx2>=2.x, and its
+    #    presence makes authlib (a safety dependency) take an httpx2 code path
+    #    that is broken in httpcore2 2.13.1.
+    #
+    # pip-audit is PyPA-maintained, backed by the Python Advisory Database via
+    # OSV, and needs no account or API key.
+    #
+    # The version is pinned deliberately. An unbounded floor is how the ruff
+    # gate silently drifted stricter until ~1,000 findings had accumulated while
+    # the job was nominally green, how `pip install safety` picked up a release
+    # that crashes on our dependencies, and how mistralai>=0.1.0 ended up
+    # importing a module removed in v1.0.
+    - name: Install audit tool
       run: |
         python -m pip install --upgrade pip
-        pip install safety
-    
+        pip install "pip-audit>=2.9,<3"
+
+    # `pip-audit .` resolves the dependencies DECLARED in pyproject.toml rather
+    # than scanning whatever happens to be installed on the runner. The
+    # trailing dot is the whole point: a bare `pip-audit` would audit the
+    # ambient environment and flag the runner's setuptools again, which is the
+    # irrelevant finding we are removing.
     - name: Run security audit
       run: |
-        safety check
+        pip-audit .
