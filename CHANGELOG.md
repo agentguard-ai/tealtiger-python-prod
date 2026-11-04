@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (behaviour change — read before upgrading)
+
+- **`TealEngine.evaluate_with_mode()` now raises `NotImplementedError` under
+  `PolicyMode.ENFORCE` and `PolicyMode.MONITOR`.** `TealEngine._evaluate_policies()`
+  returned `{"allowed": True}` unconditionally and never read `self.policies`, so every
+  request was permitted: a tool configured `{"allowed": False}`, prompt injection, PII,
+  `os.system('rm -rf /')`, and any cost above any limit. It produced no denials under any
+  policy while reporting `POLICY_COMPLIANT` and a risk score of 0.
+
+  This is the same defect `PolicyTester.test_policy()` had in 1.5.0, one layer down, and
+  gets the same treatment: a governance API that silently permits is worse than one that
+  is absent, because it manufactures the appearance of a control.
+
+  `PolicyMode.REPORT_ONLY` is unaffected and still returns a `Decision`. That mode's
+  contract is that evaluation is skipped, which this engine can honour honestly.
+
+  **Migration:** use the guardrails (`PIIDetectionGuardrail`,
+  `PromptInjectionGuardrail`, `ContentModerationGuardrail`) for content governance,
+  `observe()` for provider instrumentation and cost tracking, `freeze()` as a kill
+  switch, `TealCircuit` for failure isolation, and the TypeScript SDK for tool-allowlist
+  enforcement, which is verified against the shared conformance corpus. Python policy
+  evaluation is scheduled for implementation against the published conformance
+  specification.
+
+  No caller could have been relying on a correct result, so no correct behaviour breaks.
+
+### Fixed
+
+- **Corrected the README's OWASP ASI coverage claims.** The table claimed 7 of 10
+  categories covered, with 🟢 Full coverage of ASI02 (tool misuse), ASI03 (identity and
+  access control) and ASI05 (unsafe code execution) attributed to `TealEngine`, which
+  governs nothing. Those three rows are now marked not implemented, `TealEngine` is
+  removed from ASI01 and ASI06, and the headline reads 2 of 10 with full coverage. The
+  `TealEngine` feature section no longer documents an `evaluate()` method that does not
+  exist or a `mode` dict that raises `AttributeError` in the constructor.
+
 ## [1.5.0] - 2026-10-03
 
 ### Added
