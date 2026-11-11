@@ -168,29 +168,46 @@ def get_policy_id_from_context(context: Dict[str, Any]) -> str:
 
 
 class TealEngine:
-    """TealEngine - Core policy evaluation engine.
+    """TealEngine - policy evaluation is NOT IMPLEMENTED in the Python SDK.
 
-    Provides policy evaluation with mode-specific behavior and Decision contract.
+    .. warning::
+
+       **Do not use this class for enforcement.** It does not evaluate the policy you
+       pass it. Calls raise :class:`NotImplementedError` under ``ENFORCE`` and ``MONITOR``.
+
+       Until this release it returned ALLOW for every request regardless of policy,
+       reporting ``POLICY_COMPLIANT`` with a risk score of 0. A tool configured
+       ``{"allowed": False}`` was permitted, as were prompt injection, PII, unsafe code
+       and any cost above any limit. See :meth:`_evaluate_policies`.
+
+    For content governance use the guardrails; for provider instrumentation and cost
+    tracking use ``observe()``; for a kill switch use ``freeze()``. For tool-allowlist
+    enforcement that is specified and conformance-verified, use the TypeScript SDK.
+
+    ``PolicyMode.REPORT_ONLY`` remains usable, because that mode's contract is that
+    evaluation is skipped rather than performed.
 
     Example:
         >>> from tealtiger.core.engine import TealEngine, ModeConfig, PolicyMode
-        >>> from tealtiger.core.context import ContextManager
         >>>
-        >>> # Create engine with MONITOR mode
+        >>> # REPORT_ONLY is honest here: it promises no evaluation and performs none.
         >>> engine = TealEngine(
         ...     policies={},
-        ...     mode=ModeConfig(default=PolicyMode.MONITOR)
+        ...     mode=ModeConfig(default=PolicyMode.REPORT_ONLY)
         ... )
-        >>>
-        >>> # Evaluate request
-        >>> context = ContextManager.create_context()
         >>> decision = engine.evaluate_with_mode(
-        ...     {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"},
-        ...     context
+        ...     {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"}
         ... )
+        >>> decision.action.value
+        'ALLOW'
+        >>> [c.value for c in decision.reason_codes]
+        ['REPORT_ONLY_MODE']
         >>>
-        >>> print(f"Action: {decision.action}")
-        >>> print(f"Risk Score: {decision.risk_score}")
+        >>> # ENFORCE and MONITOR now fail rather than silently permitting.
+        >>> strict = TealEngine(policies={}, mode=ModeConfig(default=PolicyMode.ENFORCE))
+        >>> strict.evaluate_with_mode({"agentId": "a", "action": "tool.execute"})
+        Traceback (most recent call last):
+        NotImplementedError: TealEngine does not evaluate policy in the Python SDK...
     """
 
     def __init__(
@@ -449,21 +466,47 @@ class TealEngine:
         raise ValueError(f"Invalid policy mode: {effective_mode}")
 
     def _evaluate_policies(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Evaluate policies against request context (simplified implementation).
+        """Not implemented in the Python SDK. Always raises.
 
-        Args:
-            context: Request context dict
+        This method previously returned ``{"allowed": True, "triggered_policies": []}``
+        unconditionally, without reading ``self.policies``. Every request was permitted:
+        a tool configured ``{"allowed": False}``, prompt injection, PII,
+        ``os.system('rm -rf /')``, and any cost above any limit. It produced no denials
+        under any policy, while reporting ``POLICY_COMPLIANT`` and a risk score of 0.
 
-        Returns:
-            Dict with keys: allowed (bool), reason (str), triggered_policies (list)
+        A governance API that silently permits is worse than one that is absent, because it
+        manufactures the appearance of a control. It now fails loudly instead.
+
+        This follows the precedent set for ``PolicyTester.test_policy()`` in 1.5.0, which
+        returned ``decision="allow"`` for every input and was changed to raise rather than
+        continue handing out false passes. This is the same defect one layer down.
+
+        Raises:
+            NotImplementedError: always, when the effective mode is ENFORCE or MONITOR.
+
+        Note:
+            ``PolicyMode.REPORT_ONLY`` still works, and deliberately so: that mode's
+            contract is that evaluation is skipped, which this engine can honour honestly.
+            ``evaluate_with_mode`` returns before reaching this method in that case.
         """
-        # Simplified policy evaluation - in real implementation, use PolicyEvaluator
-        # For now, just return a basic result
-        return {
-            "allowed": True,
-            "reason": None,
-            "triggered_policies": [],
-        }
+        raise NotImplementedError(
+            "TealEngine does not evaluate policy in the Python SDK. It previously "
+            "returned ALLOW for every request regardless of the configured policy, so it "
+            "provided no enforcement while appearing to.\n"
+            "\n"
+            "Use instead:\n"
+            "  - guardrails (PIIDetectionGuardrail, PromptInjectionGuardrail, "
+            "ContentModerationGuardrail) for content governance\n"
+            "  - observe() for provider instrumentation and cost tracking\n"
+            "  - freeze() as a kill switch\n"
+            "  - TealCircuit for failure isolation\n"
+            "  - the TypeScript SDK for tool-allowlist enforcement, which is verified "
+            "against the shared conformance corpus\n"
+            "\n"
+            "PolicyMode.REPORT_ONLY remains usable, since that mode does not promise "
+            "evaluation. Tracking: policy evaluation is scheduled for implementation "
+            "against the published conformance specification."
+        )
 
     def get_mode_config(self) -> ModeConfig:
         """Get the current mode configuration.
