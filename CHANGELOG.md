@@ -35,6 +35,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Two tests that could fail against correct code.**
+  - `test_update_budget` asserted `updated_at != created_at` across two real
+    `datetime.utcnow()` calls microseconds apart. The Windows system clock ticks roughly
+    every 15.6ms, so both calls returned the same instant and the test failed on a correct
+    implementation. The clock is now pinned to two known instants, which also makes the
+    assertion exact: `update_budget` must write the second one and leave `created_at` alone.
+  - `test_wildcard_freeze_unfreeze_round_trip` asserted that an individually frozen agent
+    survives a `freeze("*")`/`unfreeze("*")` round trip, but its `st.text(min_size=1)`
+    strategy eventually generates `"*"` itself. `freeze("*")` sets the wildcard flag and
+    adds nothing to the frozen set, so for that input there is no individual freeze to
+    preserve. The sentinel is now excluded from the property and its actual semantics are
+    pinned in explicit cases instead.
+- **Removed a hardcoded absolute path from the test suite.** `tests/test_observe_properties.py`
+  began with a `sys.path.insert` pointing into a OneDrive folder belonging to a different
+  checkout (`tealtiger-python`, not this repository). It was a no-op in CI, where the path
+  does not exist, but locally it could shadow the package under test with a stale copy.
 - **Corrected the README's OWASP ASI coverage claims.** The table claimed 7 of 10
   categories covered, with 🟢 Full coverage of ASI02 (tool misuse), ASI03 (identity and
   access control) and ASI05 (unsafe code execution) attributed to `TealEngine`, which

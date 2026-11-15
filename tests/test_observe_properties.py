@@ -3,12 +3,8 @@ Property-based tests for TealTiger observe() module.
 
 Uses hypothesis to validate universal correctness properties.
 """
-import sys
-
-sys.path.insert(0, r"c:\Users\satis\OneDrive\AI Agent Security Platform\packages\tealtiger-python\src")
-
 import pytest
-from hypothesis import given, settings
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from tealtiger.observe.behavioral_baseline import BehavioralBaseline
@@ -36,6 +32,9 @@ def reset_freeze_registry():
 # ---------------------------------------------------------------------------
 
 agent_ids = st.text(min_size=1, max_size=50)
+# "*" is the wildcard sentinel, not an agent id. Tests that need a single
+# concrete agent exclude it; see TestWildcardFreezeSemantics for its behaviour.
+WILDCARD = "*"
 window_sizes = st.integers(min_value=1, max_value=500)
 costs = st.floats(min_value=0, max_value=1000, allow_nan=False, allow_infinity=False)
 latencies = st.floats(min_value=0, max_value=1000, allow_nan=False, allow_infinity=False)
@@ -139,7 +138,16 @@ class TestFreezeUnfreezeRoundTrip:
     @settings(max_examples=100)
     @given(agent_id=agent_ids)
     def test_wildcard_freeze_unfreeze_round_trip(self, agent_id):
-        """Wildcard freeze/unfreeze does not affect individually frozen agents."""
+        """Wildcard freeze/unfreeze does not affect individually frozen agents.
+
+        ``agent_id`` is an individual agent, so the wildcard sentinel is excluded:
+        ``freeze("*")`` sets the wildcard flag and adds nothing to the frozen set,
+        so for ``agent_id == "*"`` there is no individual freeze to preserve and the
+        round trip correctly ends unfrozen. That case is asserted directly in
+        TestWildcardFreezeSemantics rather than smuggled in here.
+        """
+        assume(agent_id != WILDCARD)
+
         registry = FreezeRegistry.get_instance()
         registry._reset()
 
@@ -147,11 +155,39 @@ class TestFreezeUnfreezeRoundTrip:
         registry.freeze(agent_id)
 
         # Wildcard freeze then unfreeze
-        registry.freeze("*")
-        registry.unfreeze("*")
+        registry.freeze(WILDCARD)
+        registry.unfreeze(WILDCARD)
 
         # Individual freeze should still be active
         assert registry.is_frozen(agent_id) is True
+
+
+class TestWildcardFreezeSemantics:
+    """The wildcard sentinel is a flag, not a membership in the frozen set.
+
+    Pinned as explicit cases because `agent_ids` generates "*" eventually, and
+    the distinction decides what the round-trip property above can assert.
+    """
+
+    def test_wildcard_freeze_sets_a_flag_and_not_a_member(self):
+        registry = FreezeRegistry.get_instance()
+        registry._reset()
+
+        registry.freeze(WILDCARD)
+
+        assert registry.is_wildcard_freeze() is True
+        assert WILDCARD not in registry._frozen_agents
+
+    def test_wildcard_round_trip_leaves_nothing_frozen(self):
+        registry = FreezeRegistry.get_instance()
+        registry._reset()
+
+        registry.freeze(WILDCARD)
+        registry.unfreeze(WILDCARD)
+
+        assert registry.is_wildcard_freeze() is False
+        assert registry.is_frozen(WILDCARD) is False
+        assert registry.is_frozen("any-agent") is False
 
 
 # ---------------------------------------------------------------------------
