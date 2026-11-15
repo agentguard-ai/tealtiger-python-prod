@@ -8,6 +8,7 @@ from datetime import datetime
 
 import pytest
 
+from tealtiger.cost import budget as budget_module
 from tealtiger.cost.budget import BudgetManager
 from tealtiger.cost.storage import InMemoryCostStorage
 from tealtiger.cost.types import (
@@ -89,8 +90,30 @@ class TestBudgetCRUD:
         result = manager.get_budget('nonexistent-id')
         assert result is None
 
-    def test_update_budget(self):
-        """Test updating a budget."""
+    def test_update_budget(self, monkeypatch):
+        """Test updating a budget.
+
+        The clock is pinned rather than read. This test previously asserted
+        ``updated_at != created_at`` against two real ``datetime.utcnow()`` calls
+        microseconds apart; on Windows the system clock ticks roughly every 15.6ms,
+        so both calls returned the same instant and the assertion failed against a
+        correct implementation. Serving two known instants makes the assertion exact:
+        ``update_budget`` must write the second one and leave ``created_at`` alone.
+        """
+        created = datetime(2026, 1, 1, 0, 0, 0)
+        modified = datetime(2026, 6, 15, 12, 30, 45)
+
+        class _PinnedClock:
+            """Serves a fixed sequence from utcnow(); the only clock call on this path."""
+
+            _instants = iter((created, modified))
+
+            @classmethod
+            def utcnow(cls):
+                return next(cls._instants)
+
+        monkeypatch.setattr(budget_module, "datetime", _PinnedClock)
+
         storage = InMemoryCostStorage()
         manager = BudgetManager(storage)
 
@@ -102,7 +125,8 @@ class TestBudgetCRUD:
             action='block'
         )
 
-        original_updated_at = budget.updated_at
+        assert budget.created_at == created.isoformat()
+        assert budget.updated_at == created.isoformat()
 
         updated = manager.update_budget(
             budget.id,
@@ -114,7 +138,8 @@ class TestBudgetCRUD:
         assert updated.limit == 200.0
         assert updated.name == "Updated Budget"
         assert updated.period == 'daily'  # Unchanged
-        assert updated.updated_at != original_updated_at
+        assert updated.updated_at == modified.isoformat()
+        assert updated.created_at == created.isoformat()  # Not touched by an update
 
     def test_update_nonexistent_budget(self):
         """Test updating a budget that doesn't exist."""
