@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-11-15
+
+Documentation only. No code change; the package behaves exactly as 1.6.0.
+
+### Fixed
+
+- **The README shipped with 1.6.0 still said "What's New in v1.5.0"** and carried a
+  hardcoded `v1.5.0` version badge. PyPI renders the README as the project description and
+  **freezes it per release**, so the 1.6.0 project page advertises the previous release's
+  highlights and omits the breaking change that release exists to deliver. A project
+  description cannot be edited after upload, so correcting it requires a new version — this
+  one.
+
+  The rest of the 1.6.0 README was accurate: the `TealEngine` section and the OWASP ASI
+  table were corrected in that release and are unchanged here. What was missed is the
+  "What's New" section and the badge, neither of which `twine check --strict` inspects — it
+  verifies that the description *renders*, not that it is *current*.
+
+- **Removed the hardcoded version badge** rather than bumping it. It duplicated the
+  dynamic PyPI version badge immediately above it, which reads the real version from the
+  registry and cannot go stale. One source for the version, like `pyproject.toml` is for
+  the package itself.
+
 ## [1.6.0] - 2026-11-15
 
 ### Changed (behaviour change — read before upgrading)
@@ -341,7 +364,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common integration patterns
 - Poetry and pip support
 
-[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.6.1
 [1.6.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.6.0
 [1.5.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.5.0
 [1.2.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.2.0
