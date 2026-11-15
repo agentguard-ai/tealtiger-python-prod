@@ -14,24 +14,28 @@
   [![Tests](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml/badge.svg)](https://github.com/agentguard-ai/tealtiger-python-prod/actions/workflows/test.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
   [![Documentation](https://img.shields.io/badge/docs-docs.tealtiger.ai-teal)](https://docs.tealtiger.ai)
-  [![v1.5.0](https://img.shields.io/badge/version-v1.5.0-teal.svg)](https://pypi.org/project/tealtiger/)
   [![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289da?logo=discord&logoColor=white)](https://discord.gg/X2ePf8QAj)
 </div>
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
 
-## What's New in v1.5.0
+## What's New in v1.6.0
 
-- **`PolicyHotSwapManager`** (`tealtiger.core.engine.v1_3`) — validate and hot-swap
-  governance policy bundles at runtime. Schema, integrity hash, capability
-  negotiation and signature checks; FREEZE rules persist across swaps and are never
-  removed by a bundle that omits them. Bundle hashes are byte-compatible with the
-  TypeScript SDK.
-- **`PolicyTester.test_policy()` now raises instead of returning a false pass.** It
-  previously returned `decision="allow"` for every input, including policies that
-  denied the request. Use **`PolicyTestRunner`** for real policy testing — see
-  [Policy Test Harness](#policy-test-harness) below.
-- Lint gate cleaned and `ruff` pinned, so it stops drifting stricter on its own.
+- **`TealEngine` no longer permits everything it is asked to govern.**
+  `evaluate_with_mode()` raises `NotImplementedError` under `PolicyMode.ENFORCE` and
+  `PolicyMode.MONITOR`, where it previously returned ALLOW for every request without
+  reading the policy passed to it. `PolicyMode.REPORT_ONLY` is unchanged, because that
+  mode promises no evaluation. **This is a breaking change and it is the point of the
+  release** — see [TealEngine](#tealengine--not-implemented-in-the-python-sdk) below for
+  what to use instead.
+- **OWASP ASI coverage claims corrected** from 7 of 10 to 2 of 10 with full coverage.
+  ASI02, ASI03 and ASI05 were credited to `TealEngine`, which governs nothing. See
+  [the table](#-owasp-top-10-for-agentic-applications-coverage) for the per-row reasoning.
+
+Earlier releases are in the
+[changelog](https://github.com/agentguard-ai/tealtiger-python-prod/blob/main/CHANGELOG.md),
+including 1.5.0's `PolicyHotSwapManager` and the `PolicyTester.test_policy()` change that
+set the precedent for this one.
 
 ## Observe Mode (Zero-Config Adoption)
 
