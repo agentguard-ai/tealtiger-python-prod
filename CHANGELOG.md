@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-15
+
 ### Changed (behaviour change — read before upgrading)
 
 - **`TealEngine.evaluate_with_mode()` now raises `NotImplementedError` under
@@ -339,7 +341,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples for common integration patterns
 - Poetry and pip support
 
-[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.6.0
+[1.5.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.5.0
 [1.2.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.2.0
 [1.1.1]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.1.1
 [1.1.0]: https://github.com/agentguard-ai/tealtiger-python-staging/releases/tag/v1.1.0
