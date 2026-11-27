@@ -19,23 +19,35 @@
 
 > 📖 **[Read the introduction blog post](https://dev.to/nagasatish_chilakamarti_2/introducing-tealtiger-ai-security-cost-control-made-simple-4lma)** | 📚 **[Documentation](https://docs.tealtiger.ai)**
 
-## What's New in v1.6.0
+## What's New in v1.7.0
 
-- **`TealEngine` no longer permits everything it is asked to govern.**
-  `evaluate_with_mode()` raises `NotImplementedError` under `PolicyMode.ENFORCE` and
-  `PolicyMode.MONITOR`, where it previously returned ALLOW for every request without
-  reading the policy passed to it. `PolicyMode.REPORT_ONLY` is unchanged, because that
-  mode promises no evaluation. **This is a breaking change and it is the point of the
-  release** — see [TealEngine](#tealengine--not-implemented-in-the-python-sdk) below for
-  what to use instead.
-- **OWASP ASI coverage claims corrected** from 7 of 10 to 2 of 10 with full coverage.
-  ASI02, ASI03 and ASI05 were credited to `TealEngine`, which governs nothing. See
-  [the table](#-owasp-top-10-for-agentic-applications-coverage) for the per-row reasoning.
+**`TealEngine` governs one thing, verifiably.** Tool-allowlist policy is now enforced: a
+tool configured `{"allowed": False}` comes back `DENY`, and a tool nobody configured
+comes back `DENY` too, because default-deny is normative. Verified **16/16** against the
+shared [conformance corpus](https://github.com/agentguard-ai/tealtiger-conformance) in CI
+on every build, 11/11 of them cases that expect a denial.
+
+- **`Decision.triggering_clause`** names the clause that produced each decision, for
+  example `tools.file_delete.allowed`. It is what distinguishes a real verdict from a
+  coincidence, and a decision that is not `ALLOW` cannot be constructed without one.
+- **A policy configuring a rule type this SDK does not implement is refused**, not
+  partially honoured. Enforcing the half we understand and ignoring the rest would return
+  an `ALLOW` the policy did not earn. `TealEngine.rule_type_support()` publishes the claim
+  per rule type; `engine.unenforceable_sections()` answers it for your policy at startup.
+- **A conformance gate in CI**, running the shared corpus against every push and pull
+  request, reporting the build it tested and refusing to score one it cannot identify.
+- **ASI02 (Tool Misuse) moves to 🟢 Full** on that evidence — see
+  [the table](#-owasp-top-10-for-agentic-applications-coverage) for the standard applied
+  and why the number has moved twice.
+
+Not a breaking change for working code: 1.6.0 raised for every policy, so no caller was
+receiving a decision to depend on. Note that an empty policy now **allows** rather than
+raising, which is specified behaviour — a policy that configures nothing has nothing to
+enforce.
 
 Earlier releases are in the
 [changelog](https://github.com/agentguard-ai/tealtiger-python-prod/blob/main/CHANGELOG.md),
-including 1.5.0's `PolicyHotSwapManager` and the `PolicyTester.test_policy()` change that
-set the precedent for this one.
+including 1.6.0's removal of the silent-allow defect that this release builds on.
 
 ## Observe Mode (Zero-Config Adoption)
 
@@ -116,38 +128,73 @@ from tealtiger.clients import TealGemini
 
 ## 🛡️ Key Features
 
-### TealEngine — not implemented in the Python SDK
+### TealEngine — Policy Evaluation
 
-> **`TealEngine` does not evaluate policy in this SDK. Do not use it for enforcement.**
->
-> `evaluate_with_mode()` now raises `NotImplementedError` under `PolicyMode.ENFORCE` and
-> `PolicyMode.MONITOR`. `PolicyMode.REPORT_ONLY` still returns a `Decision`, because that
-> mode's contract is that evaluation is skipped rather than performed.
->
-> Until this release the engine returned ALLOW for every request without reading the policy
-> passed to it: a tool configured `{"allowed": False}` was permitted, as were prompt
-> injection, PII, `os.system('rm -rf /')`, and any cost above any limit. It produced no
-> denials under any policy while reporting `POLICY_COMPLIANT` and a risk score of 0. That
-> silent allow has been replaced with a loud failure, following the same treatment given to
-> `PolicyTester.test_policy()` in 1.5.0.
->
-> It was also not callable as previously documented here: the constructor requires a
-> `ModeConfig` rather than a dict, and there is no `evaluate()` method. Earlier versions of
-> this README showed `engine.evaluate({...})`, which raises `AttributeError`.
->
-> A previous revision of this section described multi-mode enforcement and risk-based
-> routing. That was inaccurate and has been removed rather than reworded.
+**Tool allowlist is enforced. Nothing else is.** That distinction is maintained in the
+code rather than left to this README: a policy configuring any other rule type is
+**refused**, not partially honoured.
 
-**What to use instead.** The components below are implemented and work: guardrails for PII,
-prompt injection and content moderation; `observe()` for provider instrumentation and cost
-tracking; `freeze()` as a kill switch; `TealCircuit` for failure isolation; and `TealAudit`
-for the evidence trail.
+| Rule type | Status |
+|---|---|
+| `tools` | ✅ **enforced** — specified, implemented, and verified 16/16 against the shared [conformance corpus](https://github.com/agentguard-ai/tealtiger-conformance) on every build |
+| content, code execution, cost, rate limiting, memory, identity, behavioral | ❌ **unspecified** — the conformance specification defines none of these in v0.1, so none is implemented and none is claimed |
 
-For tool-allowlist policy enforcement that is specified and conformance-tested, use the
-**TypeScript SDK**, which passes the shared
-[conformance corpus](https://github.com/agentguard-ai/tealtiger-conformance) for that rule
-type. The Python engine is scheduled for implementation against the same specification; it
-is not implemented today.
+```python
+from tealtiger import TealEngine
+from tealtiger.core.engine import ModeConfig, PolicyMode
+
+engine = TealEngine(
+    policies={"tools": {"search": {"allowed": True},
+                        "file_delete": {"allowed": False}}},
+    mode=ModeConfig(default=PolicyMode.ENFORCE),
+)
+
+decision = engine.evaluate_with_mode({
+    "agentId": "agent-001",
+    "action": "tool.execute",
+    "tool": "file_delete",
+})
+
+decision.action              # DecisionAction.DENY
+decision.reason_codes        # [POLICY_VIOLATION, TOOL_NOT_ALLOWED]
+decision.triggering_clause   # 'tools.file_delete.allowed'
+```
+
+**`triggering_clause` is the field to pay attention to.** It names the clause that
+produced the decision, which is what lets you tell a real verdict from a coincidence. A
+tool nobody configured is denied as `tools.<name>.absent`, not `tools.<name>.allowed` —
+same action, same reason codes, different policy fact, and an operator needs to tell
+"nobody configured this" from "somebody forbade this".
+
+**Default-deny is normative.** An unknown tool is not an allowed tool. `tools: {}` is an
+allowlist that permits nothing, and is deliberately not the same as omitting the section,
+which configures no tool policy at all. The only way to opt out is an explicit `"*"`
+fallback entry, which is attributed as `tools.*.allowed` so a blanket permit is visible
+in the decision rather than indistinguishable from a specific rule.
+
+**Modes** follow §5.4 of the specification. `ENFORCE` returns the decision unmodified.
+`MONITOR` evaluates fully and then allows, while preserving the reason codes and the
+clause, so a rollout can learn what *would* break without breaking it. `REPORT_ONLY`
+skips evaluation entirely and says so.
+
+```python
+# Find out at startup, not on the first denial that mattered.
+TealEngine.rule_type_support()        # {'tools': 'enforced', 'content': 'unspecified', ...}
+engine.unenforceable_sections()       # () when this engine's policy is fully enforceable
+```
+
+> **History, kept because the claim matters.** Until 1.6.0 this class returned ALLOW for
+> every request without reading the policy at all — a tool configured
+> `{"allowed": False}` was permitted, as were prompt injection, PII,
+> `os.system('rm -rf /')` and any cost above any limit, while the decision reported
+> `POLICY_COMPLIANT` with a risk score of 0. 1.6.0 replaced that silent allow with a loud
+> `NotImplementedError`. This release replaces the failure with a real decision for the
+> one rule type the specification defines, and keeps the failure for the ones it does not.
+
+For content governance use the guardrails below. For provider instrumentation and cost
+tracking use `observe()`; for a kill switch use `freeze()`; for failure isolation use
+`TealCircuit`. The TypeScript SDK implements more rule types and is scored against the
+same corpus.
 
 ### TealGuard — Security Guardrails
 
@@ -303,19 +350,17 @@ if not check.allowed:
 
 ## 🛡️ OWASP Top 10 for Agentic Applications Coverage
 
-This SDK provides **full coverage of 2 of 10** OWASP ASI categories, partial or supporting
-coverage of 3 more, and does not address the remaining 5.
+This SDK provides **full coverage of 3 of 10** OWASP ASI categories, partial or supporting
+coverage of 3 more, and does not address the remaining 4.
 
-> **Revised 2026-11.** This table previously claimed "7 out of 10" overall, with 🟢 Full
-> coverage of ASI02, ASI03 and ASI05 via `TealEngine`, and listed `TealEngine` against ASI01
-> and ASI06. `TealEngine` does not evaluate policy in this SDK (see above), so those claims
-> were not supportable and have been corrected. Rows attributed to components that do work
-> are unchanged.
+The standard applied: a row is marked 🟢 **Full** only where the capability is specified,
+implemented, **and** demonstrated by a conformance suite. That is a higher bar than this
+table used before 2026-11, and it is why the number has moved twice.
 
 | ASI | Vulnerability | Coverage | Components |
 |-----|--------------|----------|------------|
 | ASI01 | Goal Hijacking & Prompt Injection | 🟡 Partial | TealGuard |
-| ASI02 | Tool Misuse & Unauthorized Actions | ❌ Not implemented | — |
+| ASI02 | Tool Misuse & Unauthorized Actions | 🟢 Full | TealEngine |
 | ASI03 | Identity & Access Control Failures | ❌ Not implemented | — |
 | ASI04 | Supply Chain Vulnerabilities | 🔧 Support | TealAudit |
 | ASI05 | Unsafe Code Execution | ❌ Not implemented | — |
@@ -325,14 +370,26 @@ coverage of 3 more, and does not address the remaining 5.
 | ASI09 | Harmful Content Generation | 🔧 Support | TealGuard |
 | ASI10 | Rogue Agent Behavior | 🟢 Full | TealAudit |
 
-Notes on the corrected rows, so the reasoning is checkable:
+Notes on the rows that have moved, so the reasoning is checkable:
 
-- **ASI01** keeps 🟡 Partial on the strength of the prompt-injection guardrail, which is
-  implemented. `TealEngine` is removed because its content clause does nothing.
-- **ASI02, ASI03, ASI05** were attributed to `TealEngine` alone. With no working engine there
-  is no tool, identity or code-execution enforcement in this SDK.
-- **ASI06** required memory governance. This SDK has PII and secret *detectors* but no memory
-  policy engine, no memory decision actions, and no `TealMemory` export.
+- **ASI02 → 🟢 Full.** Tool-allowlist enforcement is specified (conformance spec §6,
+  TA-1 through TA-8), implemented in this SDK, and verified **16/16** against the shared
+  corpus in CI on every build, including 11/11 of the cases that expect a denial. This is
+  the same evidence standard the TypeScript SDK's ASI02 row rests on, and the row was
+  marked Not implemented until that evidence existed.
+- **ASI01** stays 🟡 Partial on the strength of the prompt-injection guardrail.
+  `TealEngine` is not credited: its content clause is unspecified and unimplemented.
+- **ASI03 and ASI05** stay ❌. Identity and code-execution rule types are UNSPECIFIED in
+  conformance spec v0.1 §7, so there is nothing to implement against yet. A policy
+  configuring either is refused rather than quietly passed.
+- **ASI06** stays ❌. This SDK has PII and secret *detectors* but no memory policy
+  engine, no memory decision actions, and no `TealMemory` export.
+
+> **Revision history for this table.** Before 2026-11 it claimed "7 out of 10", with
+> 🟢 Full coverage of ASI02, ASI03 and ASI05 attributed to a `TealEngine` that evaluated
+> nothing. That was corrected to 2 of 10 when the engine was measured. ASI02 returns to
+> Full here on evidence rather than assertion. The three rows that were never in dispute
+> — ASI08, ASI09, ASI10 — have not changed throughout.
 
 📖 [OWASP Top 10 for Agentic Applications](https://owasp.org/www-project-top-10-for-agentic-applications/)
 
