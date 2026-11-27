@@ -41,6 +41,65 @@ publish, per rule type, one of ``enforced``, ``declared-unsupported`` or ``unspe
 this tuple is the machine-readable half of that claim.
 """
 
+RULE_TYPE_SUPPORT: Mapping[str, str] = {
+    "tools": "enforced",
+    "content": "unspecified",
+    "codeExecution": "unspecified",
+    "cost": "unspecified",
+    "rateLimit": "unspecified",
+    "memory": "unspecified",
+    "identity": "unspecified",
+    "behavioral": "unspecified",
+}
+"""Published support claim per rule type, as §9.1 requires.
+
+``enforced`` means specified, implemented, and verified against the conformance corpus.
+``unspecified`` means the specification does not define it in v0.1 (§7), so no behaviour
+is claimed and none is implemented. There is deliberately no third state in use here:
+§9.3 reserves ``declared-unsupported`` for something declared but never emitted, and
+nothing in this evaluator is in that position.
+
+Kept beside :data:`SUPPORTED_RULE_TYPES` so the published claim and the executable
+behaviour cannot drift; the test suite asserts they agree.
+"""
+
+
+class UnsupportedPolicySectionError(NotImplementedError):
+    """Raised when a policy configures a rule type this engine does not implement.
+
+    Subclasses :class:`NotImplementedError` on purpose. 1.6.0 raised
+    ``NotImplementedError`` for every ENFORCE or MONITOR evaluation and its migration
+    notes told callers so; anyone who adapted to that keeps working, and now receives it
+    only for the sections that genuinely are not implemented.
+
+    Carrying the section names matters more than the message: a caller that configured
+    content governance needs to know *that* is the part which cannot be honoured, not
+    merely that something could not be.
+    """
+
+    def __init__(self, sections: Sequence[str]) -> None:
+        self.sections: Tuple[str, ...] = tuple(sections)
+        listed = ", ".join(self.sections)
+        super().__init__(
+            f"This policy configures rule types the Python SDK does not implement: "
+            f"{listed}.\n"
+            "\n"
+            "Evaluating the sections it does understand and ignoring the rest would "
+            "report an ALLOW that the policy did not earn, which is the defect fixed in "
+            "1.6.0 — so no decision is offered for this policy at all.\n"
+            "\n"
+            f"Enforced today: {', '.join(SUPPORTED_RULE_TYPES)}. Everything else is "
+            "UNSPECIFIED in conformance specification v0.1 §7.\n"
+            "\n"
+            "Options:\n"
+            "  - remove the unimplemented sections and enforce the tool allowlist\n"
+            "  - use guardrails (PIIDetectionGuardrail, PromptInjectionGuardrail, "
+            "ContentModerationGuardrail) for content governance\n"
+            "  - use PolicyMode.REPORT_ONLY, which promises no evaluation and so can "
+            "honour any policy honestly\n"
+            "  - use the TypeScript SDK, which implements more rule types"
+        )
+
 
 @dataclass(frozen=True)
 class ClauseOutcome:
