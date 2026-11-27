@@ -84,6 +84,72 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
+  # Runs the shared, language-neutral conformance corpus against this build.
+  #
+  # Distinct from `test`, and not redundant with it. The unit suite checks that this
+  # implementation does what its authors intended; the corpus checks that it does what
+  # the policy conformance specification requires, using the same cases and the same
+  # judgement rules as every other implementation. A change can keep every unit test
+  # green and still break conformance, and the reverse holds too, since the corpus
+  # covers one rule type while the suite covers the whole package.
+  #
+  # Single platform and single interpreter on purpose: policy evaluation is required to
+  # be deterministic (spec 3.6), so a conformance result that varies by OS or Python
+  # version is itself the finding, and belongs in the unit matrix where the platform
+  # axis already exists.
+  conformance:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+
+    # Installed, not merely importable. The harness asserts which build it loaded
+    # (H-2), and an editable install is what makes src/ the thing under test rather
+    # than whatever else happens to be on the path.
+    - name: Install the package under test
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+
+    # The corpus is NOT vendored into this repository. Per conformance spec 8.1 it is
+    # shared across implementations; a per-SDK copy is a copy that drifts, and the
+    # drift between privately held corpora is what left the two SDKs with 3 shared
+    # test inputs out of 69 and 25.
+    #
+    # It defaults to the public corpus repository, so this gate needs no configuration.
+    # The vars/secret overrides exist for anyone running against a fork or private copy.
+    #
+    # There is deliberately no "is it configured?" guard: the harness itself exits 2
+    # when it cannot establish what it is testing, which is the check that matters. A
+    # guard here could only repeat it less reliably.
+    - name: Fetch conformance corpus
+      uses: actions/checkout@v7
+      with:
+        repository: ${{ vars.CONFORMANCE_CORPUS_REPO || 'agentguard-ai/tealtiger-conformance' }}
+        token: ${{ secrets.CONFORMANCE_CORPUS_TOKEN || github.token }}
+        path: .conformance-corpus
+
+    - name: Run conformance harness
+      env:
+        # Defaults to the tool-allowlist suite, the only rule type specified in v0.1.
+        # Override as further rule types are specified.
+        CONFORMANCE_CORPUS: >-
+          ${{ github.workspace }}/.conformance-corpus/${{
+            vars.CONFORMANCE_CORPUS_PATH || 'suites/tool-allowlist.v0.1.json'
+          }}
+      run: python conformance_harness.py
+
+    - name: Upload conformance results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: conformance-results
+        path: conformance-results.json
+
   security:
     runs-on: ubuntu-latest
     
