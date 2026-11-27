@@ -54,6 +54,12 @@ class MockEngine:
                 component_versions={'engine': '1.1.0'},
                 correlation_id='test-correlation-id',
                 reason='Tool file_delete is not allowed',
+                # A denial must name the clause that produced it (§3.5), and the
+                # clause for an entry configured `allowed: false` is
+                # `tools.<tool>.allowed` (TA-2). `policy_id` above identifies the
+                # policy, which is a different thing: it says which document
+                # decided, not which line of it.
+                triggering_clause='tools.file_delete.allowed',
                 metadata={},
             )
         else:

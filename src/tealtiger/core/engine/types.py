@@ -8,7 +8,23 @@ This module defines the core types for:
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+CLAUSE_NONE = "none"
+"""`triggering_clause` value meaning no clause decided.
+
+Spelled once because it is load-bearing in two places that must agree: §5.3 makes
+it the value for an allow under an empty or absent policy, and §3.5 makes it
+invalid on anything other than an ALLOW.
+"""
+
+CLAUSE_UNKNOWN = "unknown"
+"""`triggering_clause` value for a non-ALLOW whose producing clause cannot be determined.
+
+An escape hatch for inherited decisions, not a default. Preferable to `none` on a
+denial, which the Decision validator rejects, and preferable to inventing a clause
+path that no policy document contains.
+"""
 
 
 class PolicyMode(str, Enum):
@@ -251,10 +267,66 @@ class Decision(BaseModel):
         description="Human-readable reason for the decision",
     )
 
+    triggering_clause: str = Field(
+        CLAUSE_NONE,
+        description=(
+            "Dotted path of the clause that produced this decision, e.g. "
+            "'tools.file_delete.allowed'. 'none' means no clause decided, which is "
+            "only valid on an ALLOW."
+        ),
+    )
+    """Which clause produced this decision.
+
+    Required by the policy conformance specification §3.5, where it is the
+    *anti-vacuity* requirement. A correct verdict is not evidence of correct
+    governance: in the cross-run that produced that specification, all 13
+    unsafe-code cases returned the expected ``DENY`` with the expected
+    ``UNSAFE_CODE_DETECTED``, and all 13 were produced by a language precondition
+    rather than by inspecting any code. Without this field a test suite can be
+    entirely vacuous and still report as healthy.
+
+    Conventions, following the existing ``policy_id`` namespacing:
+
+    - policy evaluation — the dotted clause path, e.g. ``tools.file_delete.allowed``,
+      ``tools.unregistered.absent``, ``request.tool.missing``
+    - :class:`~tealtiger.core.guard.TealGuard` — ``guardrail.<name>`` of the
+      guardrail that failed, or the inherited clause when a policy decision
+      produced the action
+    - :class:`~tealtiger.core.circuit.TealCircuit` — ``circuit.open``
+    - ``'none'`` — nothing denied. §5.3: an empty or absent policy allows with
+      ``POLICY_COMPLIANT`` and a ``triggering_clause`` of ``none``.
+
+    Defaulted rather than required so that adding it breaks no caller. The
+    validator below is what stops that default from becoming a hole.
+    """
+
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
         description="Additional metadata about the decision",
     )
+
+    @model_validator(mode="after")
+    def _non_allow_must_name_its_clause(self) -> "Decision":
+        """A decision that is not ALLOW MUST name the clause that produced it.
+
+        This is §3.5 enforced at the type rather than trusted to each call site.
+        A denial attributed to ``none`` is unauditable: it asserts that something
+        was refused while recording nothing about what refused it, which is the
+        exact condition the field was introduced to make impossible.
+
+        Checked on construction, so no future code path can produce an
+        unattributed denial without failing immediately and locally.
+        """
+        if self.action != DecisionAction.ALLOW and self.triggering_clause == CLAUSE_NONE:
+            raise ValueError(
+                f"Decision.action is {self.action.value} but triggering_clause is "
+                f"'{CLAUSE_NONE}'. A decision that is not ALLOW must name the clause "
+                "that produced it (conformance spec §3.5). Use the dotted clause path "
+                "for policy evaluation, 'guardrail.<name>' for a guardrail, "
+                "'circuit.open' for the circuit breaker, or 'unknown' if the "
+                "producing clause genuinely cannot be determined."
+            )
+        return self
 
     # Optional fields for distributed tracing
     trace_id: Optional[str] = Field(

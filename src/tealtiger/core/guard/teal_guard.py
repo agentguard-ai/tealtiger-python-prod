@@ -12,7 +12,14 @@ from typing import Any, Dict, List, Optional
 
 from ..context.context_manager import ContextManager
 from ..context.execution_context import ExecutionContext
-from ..engine.types import Decision, DecisionAction, PolicyMode, ReasonCode
+from ..engine.types import (
+    CLAUSE_NONE,
+    CLAUSE_UNKNOWN,
+    Decision,
+    DecisionAction,
+    PolicyMode,
+    ReasonCode,
+)
 from .types import GuardrailResult
 
 
@@ -335,6 +342,29 @@ class TealGuard:
         if policy_decision and policy_decision.metadata.get("triggered_policies"):
             triggered_policies.extend(policy_decision.metadata["triggered_policies"])
 
+        # Attribute the decision to whatever actually produced it (§3.5).
+        #
+        # Order matters and follows the action selection above: when a policy
+        # decision supplies the action, the policy's own clause is the honest
+        # attribution, so it is inherited rather than overwritten with a guardrail
+        # name that did not decide anything. Otherwise the first failing guardrail
+        # is what refused the request.
+        #
+        # `unknown` covers one real case: an inherited non-ALLOW decision whose own
+        # clause is `none`. That is a bug in whatever produced it, and `unknown`
+        # records honestly that this component cannot say which clause decided —
+        # rather than `none`, which the Decision validator rejects on a non-ALLOW,
+        # and rather than a clause path invented here.
+        if action == DecisionAction.ALLOW:
+            triggering_clause = CLAUSE_NONE
+        elif policy_decision and policy_decision.action != DecisionAction.ALLOW:
+            inherited = policy_decision.triggering_clause
+            triggering_clause = inherited if inherited != CLAUSE_NONE else CLAUSE_UNKNOWN
+        elif triggered_policies:
+            triggering_clause = triggered_policies[0]
+        else:
+            triggering_clause = CLAUSE_UNKNOWN
+
         # Build metadata
         metadata: Dict[str, Any] = {
             "evaluation_time_ms": execution_time,
@@ -368,6 +398,7 @@ class TealGuard:
             component_versions=self.component_versions,
             correlation_id=execution_context.correlation_id,
             reason=reason,
+            triggering_clause=triggering_clause,
             metadata=metadata,
         )
 

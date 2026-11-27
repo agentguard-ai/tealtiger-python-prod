@@ -12,7 +12,14 @@ from typing import Any, Dict, List, Optional
 
 from ..context.context_manager import ContextManager
 from ..context.execution_context import ExecutionContext
-from .types import Decision, DecisionAction, ModeConfig, PolicyMode, ReasonCode
+from .types import (
+    CLAUSE_NONE,
+    Decision,
+    DecisionAction,
+    ModeConfig,
+    PolicyMode,
+    ReasonCode,
+)
 
 
 def get_package_version() -> str:
@@ -315,6 +322,10 @@ class TealEngine:
                 component_versions=self.component_versions,
                 correlation_id=exec_context.correlation_id,
                 reason="Request allowed in REPORT_ONLY mode (policy evaluation skipped)",
+                # No clause decided, because no clause was consulted. §5.4 makes that
+                # this mode's whole contract, so `none` is the honest value here
+                # rather than a placeholder.
+                triggering_clause=CLAUSE_NONE,
                 metadata=metadata,
             )
 
@@ -407,6 +418,13 @@ class TealEngine:
             return decision
 
         # ENFORCE mode: Block violations, allow compliant requests
+        #
+        # Unreachable today: `_evaluate_policies` above raises NotImplementedError, so
+        # control never arrives here. The Decision below therefore does not set
+        # `triggering_clause`, and its DENY branch would fail the §3.5 validator if it
+        # ever ran. That is deliberate rather than overlooked — the clause can only be
+        # supplied by the evaluator that does not exist yet, and the validator failing
+        # loudly is a better outcome than a placeholder that looks like attribution.
         if effective_mode == PolicyMode.ENFORCE:
             metadata = {
                 "evaluation_time_ms": int((time.time() - start_time) * 1000),
