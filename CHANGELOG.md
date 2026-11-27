@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Conformance harness and CI gate** (`conformance_harness.py`, plus a `conformance`
+  job in `test.yml`). Runs the shared, language-neutral corpus against this build on
+  every push and pull request, and fails the build when a case fails.
+
+  The corpus is **not vendored**. §8.1 requires it to be shared across implementations,
+  and a per-SDK copy is a copy that drifts — the drift between privately held corpora is
+  what left the two SDKs with 3 shared test inputs out of 69 and 25. CI checks out
+  `agentguard-ai/tealtiger-conformance` by default, with `vars`/`secrets` overrides for a
+  fork or private copy.
+
+  Implements all four harness obligations from §8.3:
+
+  - **H-1** reports the build under test — package version, resolved module path and
+    interpreter — *before* the score, so a number cannot be read without knowing what
+    produced it. It also prints the §9.1 support claim, because a pass rate is
+    unreadable without knowing which rule types it covers.
+  - **H-2** exits **2** when it cannot establish what it is testing: no corpus
+    configured, corpus missing, or the SDK resolving from outside this repository. That
+    exit code is deliberately distinct from 1, so "this build does not conform" and "I
+    cannot tell you anything about this build" are never confused. The check exists
+    because the failure already happened — ambient Python silently imported `tealtiger`
+    1.0.0 from an AppData directory during the original measurement work, and an earlier
+    false finding in a published release note came from exactly that.
+  - **H-3** scores by the same four checks, in the same order, producing the same
+    categories as the TypeScript harness: action, missing codes, forbidden codes, then
+    `triggering_clause`. A result that is not comparable across implementations cannot
+    settle a disagreement between them, which is the point of a shared corpus.
+  - **H-4** reports outcomes by category (`WRONG_ACTION`, `WRONG_CODES`,
+    `WRONG_MECHANISM`, `ERROR`) and splits DENY-expecting from ALLOW-expecting cases. A
+    single rate once ranked a do-nothing engine above a partly-working one: Python scored
+    9/69 against TypeScript's 8/69 while denying nothing at all, because allowing
+    everything satisfies every ALLOW-expecting case.
+
+  **Current result: 16/16, with 11/11 DENY-expecting cases passing.** The results file is
+  written to `conformance-results.json` by default, overridable with
+  `CONFORMANCE_RESULTS`, and uploaded as a CI artifact.
+
 ### Changed (behaviour change — read before upgrading)
 
 - **`TealEngine` enforces the tool allowlist.** `evaluate_with_mode()` now returns a real

@@ -129,3 +129,10 @@ dmypy.json
 # Project specific
 *.log
 .pytest_cache/
+
+# Conformance harness output. A run artifact, not a source file: committing it would
+# turn a measurement of one machine's build into a claim about the repository, and the
+# number it carries is only meaningful next to the build identity that produced it.
+# CI uploads it as an artifact instead.
+conformance-results.json
+.conformance-corpus/
