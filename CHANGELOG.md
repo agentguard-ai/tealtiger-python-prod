@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tool-allowlist policy evaluation** (`tealtiger.core.engine.policy_evaluator`) —
+  the first rule type this SDK actually decides. Implements TA-1 through TA-8 of the
+  policy conformance specification §6.2, §5.3 AND aggregation, §4.1 precondition
+  handling, and §3.6 determinism. **Passes 16/16 against the published conformance
+  corpus**, the same byte-identical suite the TypeScript SDK is scored on.
+
+  Not yet wired into `TealEngine`, which still raises. That is the next change, because
+  an engine that decides one rule type must declare per rule type what it enforces
+  (§9.1) rather than implying it enforces everything.
+
+  What the requirements amount to:
+
+  - A `tool.execute` request with no `tool` is **malformed input**, reported as
+    `request.tool.missing` with `INVALID_REQUEST` — never as `TOOL_NOT_ALLOWED`. A
+    client that forgot a field and a governance verdict about a real tool are different
+    events (TA-1, §4.1a).
+  - An entry configured `allowed: false` denies, attributed to
+    `tools.<tool>.allowed` (TA-2).
+  - A tool **absent** from the map denies, attributed to `tools.<tool>.absent`.
+    Default-deny is normative (TA-4), and the two denials are distinguishable by clause
+    alone because they are different policy facts (TA-5).
+  - Tool names match **exactly**: `Search`, `FILE_DELETE` and `search ` are three
+    different tools from `search`, and each is denied as absent rather than quietly
+    matched (TA-6).
+  - An **absent** `tools` section and a present but **empty** `tools: {}` are not the
+    same thing. Absent means no tool policy is configured; `{}` is an allowlist that
+    permits nothing. Collapsing them would mean a misconfiguration producing an empty
+    map silently permits every tool (TA-7).
+  - `*` is a **fallback entry**, not a pattern. A specific entry always wins, and a
+    denial inherited from the fallback reports `tools.*.allowed` so an operator can tell
+    a blanket default from a rule somebody wrote about that tool (TA-8).
+
+  Sections the evaluator does not implement are **reported, not ignored**:
+  `evaluate_policies` returns the unevaluated section names alongside the outcome. An
+  evaluator that silently allowed what it had not implemented would be the 1.6.0 defect
+  in a smaller box.
+
+  A malformed `allowed` value — absent, or not a boolean — **raises** rather than
+  deciding. §6.1 requires a boolean and does not say what to do otherwise, and both
+  silent readings are bad: denying turns a typo into an outage attributed to a clause the
+  author believes says `true`, and allowing turns a typo into silent non-enforcement.
+  Recorded as a specification gap.
+
 - **`Decision.triggering_clause`** — the dotted path of the clause that produced a
   decision, for example `tools.file_delete.allowed`. Required by the policy conformance
   specification §3.5, where it is the *anti-vacuity* requirement: a correct verdict is not
