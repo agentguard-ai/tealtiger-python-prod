@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-27
+
+Tool-allowlist policy is enforced, and verified against the shared conformance corpus in
+CI. Python was 0/16 on that corpus at 1.6.1 and is 16/16 here, including 11/11 of the
+cases that expect a denial.
+
+Minor rather than major: 1.6.0 raised for every policy under `ENFORCE` and `MONITOR`, so
+no caller was receiving a decision to depend on, and nothing that worked stops working.
+The one behaviour to check before upgrading is that an empty policy now **allows**
+instead of raising, which is specified (§5.3) rather than a gap.
+
 ### Added
 
 - **Conformance harness and CI gate** (`conformance_harness.py`, plus a `conformance`
@@ -546,7 +557,8 @@ Documentation only. No code change; the package behaves exactly as 1.6.0.
 - Examples for common integration patterns
 - Poetry and pip support
 
-[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.6.1...HEAD
+[Unreleased]: https://github.com/agentguard-ai/tealtiger-python-prod/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.7.0
 [1.6.1]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.6.1
 [1.6.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.6.0
 [1.5.0]: https://github.com/agentguard-ai/tealtiger-python-prod/releases/tag/v1.5.0
