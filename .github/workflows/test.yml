@@ -32,6 +32,28 @@ jobs:
         # supported version and must be tested. If it cannot be provisioned, that
         # is a fact about our support claim, not a reason to stop looking.
         python-version: ['3.9', '3.10', '3.11', '3.12']
+        exclude:
+          # `ubuntu-latest` now resolves to an image that ships no CPython 3.9
+          # build, so setup-python cannot provision it there - on v4 or v7.
+          #
+          # This is a runner-image constraint and NOT a statement about 3.9
+          # support: with fail-fast off, the first run to report every leg showed
+          # 3.9 passing on both windows-latest and macos-latest. The package works
+          # on 3.9 and its suite passes there. Only this image cannot supply the
+          # interpreter.
+          - os: ubuntu-latest
+            python-version: '3.9'
+        include:
+          # So Linux 3.9 is covered on the last image that provides it, rather
+          # than dropped. requires-python says we support 3.9; something has to
+          # prove that on Linux.
+          #
+          # When this label is retired, this leg fails loudly and visibly - which
+          # is the point of fail-fast being off - and the choice at that moment is
+          # a real one: find another way to get 3.9 on Linux, or raise
+          # requires-python to ">=3.10" and stop claiming it.
+          - os: ubuntu-22.04
+            python-version: '3.9'
     
     steps:
     - uses: actions/checkout@v7
