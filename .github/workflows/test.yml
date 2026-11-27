@@ -11,6 +11,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     strategy:
+      # The comment below describes fail-fast hiding results. It kept happening,
+      # because the comment was a note rather than a setting: on 2026-11-11 the
+      # `3.9` leg failed to provision its interpreter and fail-fast cancelled the
+      # other eleven, so the suite ran on no platform at all and `main` went red
+      # without a single test having executed.
+      #
+      # A matrix exists to tell legs apart. One leg failing must not erase the
+      # evidence from the rest.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         # 3.8 removed: it is EOL, and the package cannot be imported on it
@@ -18,13 +27,17 @@ jobs:
         # pyproject.toml. This job was failing for that reason, and because
         # fail-fast cancels the rest of the matrix, one unsupported version was
         # hiding the results for every supported one.
+        #
+        # 3.9 is retained deliberately: requires-python is ">=3.9", so it is a
+        # supported version and must be tested. If it cannot be provisioned, that
+        # is a fact about our support claim, not a reason to stop looking.
         python-version: ['3.9', '3.10', '3.11', '3.12']
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -53,10 +66,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
     
