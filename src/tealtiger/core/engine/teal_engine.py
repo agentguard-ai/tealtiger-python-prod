@@ -8,10 +8,17 @@ This module implements the TealEngine with mode-specific behavior and Decision c
 
 import importlib.metadata
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from ..context.context_manager import ContextManager
 from ..context.execution_context import ExecutionContext
+from .policy_evaluator import (
+    RULE_TYPE_SUPPORT,
+    ClauseOutcome,
+    UnsupportedPolicySectionError,
+    evaluate_policies,
+    unsupported_sections,
+)
 from .types import (
     CLAUSE_NONE,
     Decision,
@@ -112,46 +119,16 @@ def calculate_risk_score(allowed: bool, triggered_policies: List[str]) -> int:
     return min(max(risk_score, 0), 100)
 
 
-def determine_reason_codes(allowed: bool, triggered_policies: List[str], reason: Optional[str] = None) -> List[ReasonCode]:
-    """Determine reason codes from policy evaluation result.
-
-    Args:
-        allowed: Whether the request was allowed
-        triggered_policies: List of triggered policy IDs
-        reason: Optional reason string
-
-    Returns:
-        List of ReasonCode values
-    """
-    if allowed:
-        return [ReasonCode.POLICY_COMPLIANT]
-
-    codes: List[ReasonCode] = [ReasonCode.POLICY_VIOLATION]
-
-    # Map triggered policies to reason codes
-    for policy in triggered_policies:
-        if "tools" in policy:
-            # Check if it's a tool not allowed violation
-            if "allowed" in policy or (reason and ("blocked" in reason or "not defined" in reason)):
-                codes.append(ReasonCode.TOOL_NOT_ALLOWED)
-            elif "rateLimit" in policy:
-                codes.append(ReasonCode.TOOL_RATE_LIMIT_EXCEEDED)
-        elif "identity.forbidden" in policy:
-            codes.append(ReasonCode.POLICY_VIOLATION)
-        elif "codeExecution" in policy:
-            codes.append(ReasonCode.UNSAFE_CODE_DETECTED)
-        elif "behavioral.costLimit" in policy:
-            codes.append(ReasonCode.COST_BUDGET_EXCEEDED)
-
-    # Remove duplicates while preserving order
-    seen = set()
-    unique_codes = []
-    for code in codes:
-        if code not in seen:
-            seen.add(code)
-            unique_codes.append(code)
-
-    return unique_codes
+# `determine_reason_codes` was removed here.
+#
+# It inferred reason codes by substring-matching clause paths and the human-readable
+# reason text — `if "tools" in policy`, `if "blocked" in reason` — which produced
+# `UNSAFE_CODE_DETECTED` for any clause containing "codeExecution" whether or not any
+# code was inspected. That is the shape of defect the conformance specification exists
+# to prevent, and §3.6 now makes the code order part of the contract anyway.
+#
+# The evaluator returns the codes directly, in the order TA-2 fixes, from the branch
+# that actually decided. Nothing needs to guess.
 
 
 def get_policy_id_from_context(context: Dict[str, Any]) -> str:
@@ -175,46 +152,59 @@ def get_policy_id_from_context(context: Dict[str, Any]) -> str:
 
 
 class TealEngine:
-    """TealEngine - policy evaluation is NOT IMPLEMENTED in the Python SDK.
+    """Policy evaluation. **Tool allowlist is enforced; nothing else is implemented.**
 
-    .. warning::
+    What that means precisely, because the distinction is the whole point:
 
-       **Do not use this class for enforcement.** It does not evaluate the policy you
-       pass it. Calls raise :class:`NotImplementedError` under ``ENFORCE`` and ``MONITOR``.
+    - ``tools`` — **enforced.** Specified in conformance specification §6, implemented
+      here, and verified 16/16 against the published conformance corpus.
+    - every other rule type — **unspecified.** §7 of that specification defines none of
+      them in v0.1, so none is implemented. A policy that configures one is **refused**
+      with :class:`UnsupportedPolicySectionError` rather than partially honoured.
 
-       Until this release it returned ALLOW for every request regardless of policy,
-       reporting ``POLICY_COMPLIANT`` with a risk score of 0. A tool configured
-       ``{"allowed": False}`` was permitted, as were prompt injection, PII, unsafe code
-       and any cost above any limit. See :meth:`_evaluate_policies`.
+    The refusal is deliberate. Evaluating the sections this engine understands while
+    ignoring the rest would return an ``ALLOW`` the policy did not earn, which is the
+    defect fixed in 1.6.0 wearing a smaller disguise. §9.2 forbids presenting a rule type
+    as enforced when its clause is a no-op, and the only way to keep that promise with a
+    partial implementation is to decline the whole policy.
 
-    For content governance use the guardrails; for provider instrumentation and cost
-    tracking use ``observe()``; for a kill switch use ``freeze()``. For tool-allowlist
-    enforcement that is specified and conformance-verified, use the TypeScript SDK.
+    :data:`~tealtiger.core.engine.policy_evaluator.RULE_TYPE_SUPPORT` is the
+    machine-readable version of this claim, as §9.1 requires.
 
-    ``PolicyMode.REPORT_ONLY`` remains usable, because that mode's contract is that
-    evaluation is skipped rather than performed.
+    History: until 1.6.0 this class returned ``ALLOW`` for every request without reading
+    the policy at all, reporting ``POLICY_COMPLIANT`` with a risk score of 0. 1.6.0
+    replaced that with a loud failure; this release replaces the failure with a real
+    decision for the one rule type that is specified.
 
     Example:
         >>> from tealtiger.core.engine import TealEngine, ModeConfig, PolicyMode
         >>>
-        >>> # REPORT_ONLY is honest here: it promises no evaluation and performs none.
         >>> engine = TealEngine(
-        ...     policies={},
-        ...     mode=ModeConfig(default=PolicyMode.REPORT_ONLY)
+        ...     policies={"tools": {"search": {"allowed": True},
+        ...                         "file_delete": {"allowed": False}}},
+        ...     mode=ModeConfig(default=PolicyMode.ENFORCE),
         ... )
         >>> decision = engine.evaluate_with_mode(
         ...     {"agentId": "agent-001", "action": "tool.execute", "tool": "file_delete"}
         ... )
         >>> decision.action.value
-        'ALLOW'
+        'DENY'
         >>> [c.value for c in decision.reason_codes]
-        ['REPORT_ONLY_MODE']
+        ['POLICY_VIOLATION', 'TOOL_NOT_ALLOWED']
+        >>> decision.triggering_clause
+        'tools.file_delete.allowed'
         >>>
-        >>> # ENFORCE and MONITOR now fail rather than silently permitting.
-        >>> strict = TealEngine(policies={}, mode=ModeConfig(default=PolicyMode.ENFORCE))
-        >>> strict.evaluate_with_mode({"agentId": "a", "action": "tool.execute"})
+        >>> # Default-deny: a tool nobody configured is not an allowed tool (TA-4).
+        >>> engine.evaluate_with_mode(
+        ...     {"agentId": "a", "action": "tool.execute", "tool": "unknown"}
+        ... ).triggering_clause
+        'tools.unknown.absent'
+        >>>
+        >>> # A rule type this SDK does not implement is refused, not ignored.
+        >>> partial = TealEngine(policies={"content": {"pii": "deny"}})
+        >>> partial.evaluate_with_mode({"agentId": "a", "action": "chat.create"})
         Traceback (most recent call last):
-        NotImplementedError: TealEngine does not evaluate policy in the Python SDK...
+        UnsupportedPolicySectionError: This policy configures rule types...
     """
 
     def __init__(
@@ -345,28 +335,33 @@ class TealEngine:
 
             return decision
 
-        # Evaluate policies (simplified - in real implementation, use PolicyEvaluator)
-        eval_result = self._evaluate_policies(context)
+        # Evaluate the policy. Raises for any rule type this engine does not implement,
+        # rather than evaluating the part it understands and implying the rest passed.
+        outcome = self._evaluate_policies(context)
 
-        # Calculate risk score
-        risk_score = calculate_risk_score(
-            eval_result["allowed"],
-            eval_result["triggered_policies"],
-        )
+        # The clause that decided is the only triggered policy there is. A list is kept
+        # because `metadata.triggered_policies` is part of the existing decision shape,
+        # and because §5.2 permits short-circuiting — so one entry is the honest count,
+        # not a simplification.
+        triggered_policies = [] if outcome.allowed else [outcome.triggering_clause]
 
-        # Determine reason codes
-        reason_codes = determine_reason_codes(
-            eval_result["allowed"],
-            eval_result["triggered_policies"],
-            eval_result.get("reason"),
-        )
+        # risk_score remains UNSPECIFIED (§3.4): there is no severity model behind it in
+        # either SDK, the corpus deliberately asserts nothing about it, and decision D2
+        # has not been taken. It is computed here only to keep the field populated, and
+        # should not be routed on.
+        risk_score = calculate_risk_score(outcome.allowed, triggered_policies)
+
+        # Reason codes come from the evaluator, in the order the specification fixes
+        # (TA-2: POLICY_VIOLATION first, then the specific code). §3.6 makes that order
+        # part of the contract, so it is not re-derived here from a bag of strings.
+        reason_codes = list(outcome.reason_codes)
 
         # MONITOR mode: Always allow but log violations
         if effective_mode == PolicyMode.MONITOR:
             metadata = {
                 "evaluation_time_ms": int((time.time() - start_time) * 1000),
                 "cache_hit": False,
-                "triggered_policies": eval_result["triggered_policies"],
+                "triggered_policies": triggered_policies,
                 "evaluation_performed": True,
             }
 
@@ -380,11 +375,19 @@ class TealEngine:
             if exec_context.agent_purpose:
                 metadata["agent_purpose"] = exec_context.agent_purpose
 
+            # §5.4: MONITOR evaluates fully, then returns ALLOW while PRESERVING the
+            # computed reason codes and triggering clause, so the would-be denial is
+            # recorded rather than erased.
+            #
+            # An ALLOW carrying a clause looks contradictory and is exactly right here:
+            # it says "nothing was blocked, and this is the clause that would have
+            # blocked it". The §3.5 validator permits it deliberately — it only forbids
+            # the reverse, a non-ALLOW that names nothing.
             decision = Decision(
                 action=DecisionAction.ALLOW,
                 reason_codes=(
                     [ReasonCode.POLICY_COMPLIANT]
-                    if eval_result["allowed"]
+                    if outcome.allowed
                     else [ReasonCode.MONITOR_MODE_VIOLATION] + reason_codes
                 ),
                 risk_score=risk_score,
@@ -394,10 +397,11 @@ class TealEngine:
                 component_versions=self.component_versions,
                 correlation_id=exec_context.correlation_id,
                 reason=(
-                    "Request allowed and compliant with policy"
-                    if eval_result["allowed"]
-                    else f"Request allowed in MONITOR mode but would violate policy: {eval_result.get('reason', 'Policy violation')}"
+                    outcome.reason
+                    if outcome.allowed
+                    else f"Request allowed in MONITOR mode but would violate policy: {outcome.reason}"
                 ),
+                triggering_clause=outcome.triggering_clause,
                 metadata=metadata,
             )
 
@@ -419,17 +423,12 @@ class TealEngine:
 
         # ENFORCE mode: Block violations, allow compliant requests
         #
-        # Unreachable today: `_evaluate_policies` above raises NotImplementedError, so
-        # control never arrives here. The Decision below therefore does not set
-        # `triggering_clause`, and its DENY branch would fail the §3.5 validator if it
-        # ever ran. That is deliberate rather than overlooked — the clause can only be
-        # supplied by the evaluator that does not exist yet, and the validator failing
-        # loudly is a better outcome than a placeholder that looks like attribution.
+        # §5.4: return the computed decision unmodified. This is the only mode that does.
         if effective_mode == PolicyMode.ENFORCE:
             metadata = {
                 "evaluation_time_ms": int((time.time() - start_time) * 1000),
                 "cache_hit": False,
-                "triggered_policies": eval_result["triggered_policies"],
+                "triggered_policies": triggered_policies,
                 "evaluation_performed": True,
             }
 
@@ -444,23 +443,16 @@ class TealEngine:
                 metadata["agent_purpose"] = exec_context.agent_purpose
 
             decision = Decision(
-                action=DecisionAction.ALLOW if eval_result["allowed"] else DecisionAction.DENY,
-                reason_codes=(
-                    [ReasonCode.POLICY_COMPLIANT]
-                    if eval_result["allowed"]
-                    else reason_codes
-                ),
+                action=DecisionAction.ALLOW if outcome.allowed else DecisionAction.DENY,
+                reason_codes=reason_codes,
                 risk_score=risk_score,
                 mode=PolicyMode.ENFORCE,
                 policy_id=policy_id,
                 policy_version=self.component_versions["engine"],
                 component_versions=self.component_versions,
                 correlation_id=exec_context.correlation_id,
-                reason=(
-                    "Request allowed and compliant with policy"
-                    if eval_result["allowed"]
-                    else eval_result.get("reason", "Request denied by policy")
-                ),
+                reason=outcome.reason,
+                triggering_clause=outcome.triggering_clause,
                 metadata=metadata,
             )
 
@@ -483,48 +475,66 @@ class TealEngine:
         # Fallback (should never reach here due to mode validation)
         raise ValueError(f"Invalid policy mode: {effective_mode}")
 
-    def _evaluate_policies(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Not implemented in the Python SDK. Always raises.
+    def _evaluate_policies(self, context: Dict[str, Any]) -> ClauseOutcome:
+        """Evaluate the policy, or refuse if it asks for a rule type we do not implement.
 
-        This method previously returned ``{"allowed": True, "triggered_policies": []}``
-        unconditionally, without reading ``self.policies``. Every request was permitted:
-        a tool configured ``{"allowed": False}``, prompt injection, PII,
-        ``os.system('rm -rf /')``, and any cost above any limit. It produced no denials
-        under any policy, while reporting ``POLICY_COMPLIANT`` and a risk score of 0.
+        **Tool allowlist is enforced.** Every other rule type is UNSPECIFIED in the
+        conformance specification v0.1 (§7) and is not implemented here, so a policy
+        that configures one is refused rather than partially honoured.
 
-        A governance API that silently permits is worse than one that is absent, because it
-        manufactures the appearance of a control. It now fails loudly instead.
+        That refusal is the load-bearing part. Until 1.6.0 this method returned
+        ``{"allowed": True}`` unconditionally without reading ``self.policies``: a tool
+        configured ``{"allowed": False}``, prompt injection, PII, ``os.system('rm -rf /')``
+        and any cost above any limit were all permitted, while the decision reported
+        ``POLICY_COMPLIANT`` and a risk score of 0. §9.2 names that failure directly — an
+        implementation MUST NOT present a rule type as enforced when its clause is a no-op.
 
-        This follows the precedent set for ``PolicyTester.test_policy()`` in 1.5.0, which
-        returned ``decision="allow"`` for every input and was changed to raise rather than
-        continue handing out false passes. This is the same defect one layer down.
+        Evaluating the sections we understand and ignoring the rest would be the same
+        defect in a smaller box: a caller who configures content governance and receives
+        ``ALLOW`` has been told their policy was applied. So the choice is deliberately
+        binary. Either the whole policy is within what this engine implements, or no
+        decision is offered for it.
 
         Raises:
-            NotImplementedError: always, when the effective mode is ENFORCE or MONITOR.
+            UnsupportedPolicySectionError: if the policy configures any rule type other
+                than ``tools``. Subclasses :class:`NotImplementedError`, so callers that
+                adapted to 1.6.0's behaviour keep working.
 
         Note:
-            ``PolicyMode.REPORT_ONLY`` still works, and deliberately so: that mode's
-            contract is that evaluation is skipped, which this engine can honour honestly.
-            ``evaluate_with_mode`` returns before reaching this method in that case.
+            ``PolicyMode.REPORT_ONLY`` never reaches this method. That mode's contract is
+            that evaluation is skipped, so it can be honoured honestly whatever the
+            policy contains.
         """
-        raise NotImplementedError(
-            "TealEngine does not evaluate policy in the Python SDK. It previously "
-            "returned ALLOW for every request regardless of the configured policy, so it "
-            "provided no enforcement while appearing to.\n"
-            "\n"
-            "Use instead:\n"
-            "  - guardrails (PIIDetectionGuardrail, PromptInjectionGuardrail, "
-            "ContentModerationGuardrail) for content governance\n"
-            "  - observe() for provider instrumentation and cost tracking\n"
-            "  - freeze() as a kill switch\n"
-            "  - TealCircuit for failure isolation\n"
-            "  - the TypeScript SDK for tool-allowlist enforcement, which is verified "
-            "against the shared conformance corpus\n"
-            "\n"
-            "PolicyMode.REPORT_ONLY remains usable, since that mode does not promise "
-            "evaluation. Tracking: policy evaluation is scheduled for implementation "
-            "against the published conformance specification."
-        )
+        outcome, unsupported = evaluate_policies(context, self.policies)
+
+        if unsupported:
+            raise UnsupportedPolicySectionError(unsupported)
+
+        return outcome
+
+    @staticmethod
+    def rule_type_support() -> Mapping[str, str]:
+        """What this engine claims to enforce, per rule type. §9.1.
+
+        ``enforced`` means specified, implemented and verified against the conformance
+        corpus. ``unspecified`` means v0.1 of the specification defines no behaviour, so
+        none is claimed and none is implemented.
+
+        Exposed as an API rather than left in prose because a published support claim
+        that only exists in a README is a claim nobody can check at runtime — and an
+        unverifiable coverage claim is exactly what the 1.6.0 corrections were about.
+        """
+        return dict(RULE_TYPE_SUPPORT)
+
+    def unenforceable_sections(self) -> Tuple[str, ...]:
+        """Sections of *this engine's* policy that it cannot enforce.
+
+        Empty means ``evaluate_with_mode`` can offer a decision under ENFORCE and
+        MONITOR. Non-empty means it will raise, and these are the section names it will
+        name. Available before any request, so a caller can find out at startup rather
+        than on the first denial that matters.
+        """
+        return unsupported_sections(self.policies)
 
     def get_mode_config(self) -> ModeConfig:
         """Get the current mode configuration.

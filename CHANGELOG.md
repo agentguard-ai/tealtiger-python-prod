@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (behaviour change — read before upgrading)
+
+- **`TealEngine` enforces the tool allowlist.** `evaluate_with_mode()` now returns a real
+  decision under `ENFORCE` and `MONITOR` for policies whose rule types this SDK
+  implements, where 1.6.0 raised `NotImplementedError` for every policy. A tool
+  configured `{"allowed": False}` comes back `DENY` with
+  `[POLICY_VIOLATION, TOOL_NOT_ALLOWED]` and `triggering_clause` of
+  `tools.<tool>.allowed`; a tool absent from the map comes back `DENY` attributed to
+  `tools.<tool>.absent`. **Verified 16/16 against the published conformance corpus
+  through the public API**, not only through the evaluator.
+
+  **A policy that configures a rule type this SDK does not implement is refused**, with
+  the new `UnsupportedPolicySectionError`. It subclasses `NotImplementedError`, so
+  callers that adapted to 1.6.0 keep working, and now see it only for the sections that
+  genuinely are not implemented.
+
+  Refusing the whole policy is deliberate. Evaluating the sections the engine understands
+  while ignoring the rest would return an `ALLOW` the policy did not earn — the 1.6.0
+  defect in a smaller box. §9.2 forbids presenting a rule type as enforced when its
+  clause is a no-op, and with a partial implementation the only way to keep that promise
+  is to decline. A caller who configured content governance and received `ALLOW` has been
+  told their policy was applied.
+
+  `TealEngine.rule_type_support()` publishes the claim per rule type (§9.1), and
+  `unenforceable_sections()` answers it for a specific engine's policy **before any
+  request**, so the discovery happens at startup rather than on the first denial that
+  mattered.
+
+  Mode behaviour now follows §5.4 exactly:
+
+  | Mode | Behaviour |
+  |---|---|
+  | `ENFORCE` | returns the computed decision unmodified |
+  | `MONITOR` | evaluates fully, then returns `ALLOW` **while preserving** the reason codes and `triggering_clause`, so the would-be denial is recorded rather than erased |
+  | `REPORT_ONLY` | unchanged — skips evaluation, and therefore honours any policy honestly whatever it contains |
+
+  A `MONITOR` decision is an `ALLOW` that carries a clause. That reads as a
+  contradiction and is exactly right: nothing was blocked, and this is the clause that
+  would have blocked it.
+
+  **Migration:** an empty or absent policy now **allows** instead of raising, which is
+  specified behaviour (§5.3) rather than a gap — a policy that configures nothing has
+  nothing to enforce. If you were relying on the 1.6.0 raise as a guard, check
+  `unenforceable_sections()` at startup instead.
+
+### Removed
+
+- **`determine_reason_codes`** (module-level in `teal_engine`). It inferred reason codes
+  by substring-matching clause paths and human-readable reason text — `if "tools" in
+  policy`, `if "blocked" in reason` — so any clause containing `codeExecution` produced
+  `UNSAFE_CODE_DETECTED` whether or not any code had been inspected. That is the defect
+  class the conformance specification exists to prevent, and §3.6 now makes reason-code
+  order part of the contract. The evaluator returns the codes directly, from the branch
+  that actually decided.
+
 ### Added
 
 - **Tool-allowlist policy evaluation** (`tealtiger.core.engine.policy_evaluator`) —
