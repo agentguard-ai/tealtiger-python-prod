@@ -2,6 +2,8 @@
 
 from tealtiger.core.engine.teal_engine import TealEngine
 from tealtiger.core.engine.types import (
+    CLAUSE_NONE,
+    CLAUSE_UNKNOWN,
     Decision,
     DecisionAction,
     ModeConfig,
@@ -16,4 +18,6 @@ __all__ = [
     "DecisionAction",
     "ReasonCode",
     "Decision",
+    "CLAUSE_NONE",
+    "CLAUSE_UNKNOWN",
 ]

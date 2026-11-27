@@ -14,7 +14,13 @@ from typing import Any, Callable, Dict, Optional, TypeVar
 
 from ..context.context_manager import ContextManager
 from ..context.execution_context import ExecutionContext
-from ..engine.types import Decision, DecisionAction, PolicyMode, ReasonCode
+from ..engine.types import (
+    CLAUSE_NONE,
+    Decision,
+    DecisionAction,
+    PolicyMode,
+    ReasonCode,
+)
 
 T = TypeVar("T")
 
@@ -164,21 +170,29 @@ class TealCircuit:
             self._transition_to(CircuitState.HALF_OPEN)
 
         # Determine action based on circuit state
+        #
+        # `triggering_clause` follows §3.5. The circuit is not policy evaluation, so
+        # there is no clause path in a policy document to name; it reports the state
+        # that refused the request, in the same namespace its `policy_id` already
+        # uses ("circuit.breaker"). Only OPEN denies, so only OPEN names a clause.
         if self.state == CircuitState.OPEN:
             action = DecisionAction.DENY
             reason_codes = [ReasonCode.CIRCUIT_OPEN]
             risk_score = 100  # Maximum risk when circuit is open
             reason = "Circuit breaker is open - service unavailable"
+            triggering_clause = "circuit.open"
         elif self.state == CircuitState.HALF_OPEN:
             action = DecisionAction.ALLOW
             reason_codes = [ReasonCode.CIRCUIT_HALF_OPEN]
             risk_score = 50  # Medium risk in half-open state
             reason = "Circuit breaker is half-open - testing service recovery"
+            triggering_clause = CLAUSE_NONE
         else:
             action = DecisionAction.ALLOW
             reason_codes = [ReasonCode.POLICY_COMPLIANT]
             risk_score = 0  # No risk when circuit is closed
             reason = "Circuit breaker is closed - normal operation"
+            triggering_clause = CLAUSE_NONE
 
         # Build metadata
         metadata: Dict[str, Any] = {
@@ -211,6 +225,7 @@ class TealCircuit:
             component_versions=self.component_versions,
             correlation_id=execution_context.correlation_id,
             reason=reason,
+            triggering_clause=triggering_clause,
             metadata=metadata,
         )
 

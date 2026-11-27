@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Decision.triggering_clause`** — the dotted path of the clause that produced a
+  decision, for example `tools.file_delete.allowed`. Required by the policy conformance
+  specification §3.5, where it is the *anti-vacuity* requirement: a correct verdict is not
+  evidence of correct governance. In the cross-run that produced that specification, all
+  13 unsafe-code cases returned the expected `DENY` with the expected
+  `UNSAFE_CODE_DETECTED`, and all 13 were produced by a language precondition rather than
+  by inspecting any code. Without this field a test suite can be entirely vacuous and
+  still report as healthy.
+
+  Defaulted to `"none"` rather than required, so no existing caller breaks. `"none"` is
+  also the specified value for an allow under an empty or absent policy (§5.3).
+
+  **A decision whose action is not `ALLOW` may not report `"none"`.** This is enforced by
+  a model validator rather than left to each call site, so no future code path can
+  produce an unattributed denial: a `DENY` attributed to nothing asserts that something
+  was refused while recording nothing about what refused it. The rule covers `REDACT`,
+  `TRANSFORM`, `REQUIRE_APPROVAL` and `DEGRADE` as well — each changes what happens to the
+  request, so each must say what decided that.
+
+  Populated by the components that produce decisions today, following the namespacing
+  their `policy_id` values already use:
+
+  - `TealGuard` — `guardrail.<name>` of the guardrail that failed, or the policy's own
+    clause when a policy decision supplied the action
+  - `TealCircuit` — `circuit.open`
+  - `TealEngine` under `REPORT_ONLY` — `"none"`, which is honest: that mode consults no
+    clause
+
+  `CLAUSE_NONE` and `CLAUSE_UNKNOWN` are exported from `tealtiger.core.engine` for callers
+  that construct decisions.
+
+  Groundwork for tool-allowlist enforcement in this SDK, which cannot pass a single
+  conformance case without it: corpus validity rule CV-2 requires every case to assert
+  that the decision's `triggering_clause` equals the clause the case targets.
+
+### Fixed
+
+- The `MockEngine` fixture in the policy-tester tests returned a `DENY` with no clause,
+  which the new validator rejects. It now reports `tools.file_delete.allowed`, the clause
+  TA-2 specifies for an entry configured `allowed: false`. `policy_id` was already
+  `tools.file_delete`, which is a different fact: it says which policy decided, not which
+  line of it.
+
 ## [1.6.1] - 2026-11-15
 
 Documentation only. No code change; the package behaves exactly as 1.6.0.
