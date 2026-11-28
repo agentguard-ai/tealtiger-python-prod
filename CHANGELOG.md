@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`Decision.metadata["evaluation_time_ms"]` was reporting 0 for almost every decision.**
+  It is computed on every evaluation and read by callers profiling the engine. Measured
+  over 2000 decisions on Windows before the fix:
+
+  | Reported | Count |
+  |---|---|
+  | `0 ms` | 1962 |
+  | `1 ms` | 38 |
+
+  Actual mean: **0.054 ms**. Two faults producing one wrong answer. `time.time()` ticks
+  about every 15.6ms on Windows, so a sub-millisecond operation reads as zero — and the
+  38 readings of `1 ms` are tick artifacts roughly 18× the real figure, not slow
+  evaluations. The `int()` cast was the other half: `int(0.054)` is `0` whatever clock
+  produced it.
+
+  A caller profiling with this field would conclude evaluation is free, and would see
+  occasional 1ms spikes that never happened.
+
+  Now measured with `time.perf_counter()` and rounded to microsecond resolution. After:
+  **no zeros, p50 0.023 ms, p95 0.034 ms**, against an independent measurement of 0.031 ms
+  mean on the same machine. The field is now a float, matching how the integrations
+  already model it; no test pinned it as an integer.
+
+  Conformance specification §3.6 states the rule directly: implementations MUST NOT
+  measure elapsed time with a wall-clock source. This is the same defect, and the same
+  fix, as `b8a3ca7` in `PolicyTester`, where it was writing `0.000` into JUnit XML.
+
+- **The same fault in six other places**, all measuring a duration with a wall-clock
+  source: `TealGuard.check` (`execution_time`), `TealCircuit.evaluate`
+  (`evaluation_time_ms`), `GuardrailEngine` (four sites), the Azure adapter
+  (`duration_ms`), both `TealTiger` client paths (`response_time`), and the sidecar's
+  `uptime_seconds` — which could previously run backwards if the system clock were
+  corrected while the process was up.
+
+  **What was deliberately left alone**, because `time.time()` is the correct choice for a
+  *timestamp* even though it is wrong for a *duration*: every `timestamp=` field, audit
+  and seal times, `added_at`, the injectable `_now_fn` clock, and
+  `cost_budget`'s day-boundary calculation — which genuinely requires wall-clock, since a
+  monotonic clock has no concept of "today". The repo went from 62 `time.time()` calls
+  against 28 `perf_counter` to 40 against 50; the remaining 40 are timestamps.
+
+  `pipeline/defense_pipeline.py` is a known exception and a follow-up: its
+  `timing.*_start`/`*_end` fields are absolute milliseconds stored in a record *and*
+  subtracted to derive `total_latency_ms`, so separating the two uses is a larger change
+  than swapping a clock.
+
+  Groundwork for the latency baseline, which cannot be published from a clock that can
+  only answer 0 or 15.6ms.
+
 ### Added
 
 - **`validate_policy()`** — check a policy document before the engine has to evaluate it.

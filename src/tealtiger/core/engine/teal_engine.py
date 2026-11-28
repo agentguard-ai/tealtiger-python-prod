@@ -268,7 +268,24 @@ class TealEngine:
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
-        start_time = time.time()
+        # perf_counter, not time(): §3.6 forbids measuring elapsed time with a
+        # wall-clock source, and this is the measurement that goes out to callers as
+        # `metadata.evaluation_time_ms` on every decision.
+        #
+        # What it used to report, measured over 2000 decisions on Windows: 0 ms for
+        # 1962 of them and 1 ms for the other 38, against an actual mean of 0.054 ms.
+        # time() ticks about every 15.6ms there, so a sub-millisecond evaluation reads
+        # as zero, and the handful of 1s are tick artifacts roughly 18x the real figure
+        # rather than slow evaluations. A caller profiling with that field would
+        # conclude evaluation is free and see spikes that never happened.
+        #
+        # The int() cast was the other half: int(0.054) is 0 whatever clock produced
+        # it. It now rounds to microsecond resolution and reports a float, matching
+        # what the integrations already model this field as.
+        #
+        # Same defect, same fix, as b8a3ca7 in PolicyTester - which was writing 0.000
+        # into JUnit XML for the same reason.
+        start_time = time.perf_counter()
 
         # Ensure we have an execution context with correlation_id
         exec_context = execution_context or ContextManager.create_context()
@@ -286,7 +303,7 @@ class TealEngine:
         # REPORT_ONLY mode: Always allow without evaluating policies
         if effective_mode == PolicyMode.REPORT_ONLY:
             metadata: Dict[str, Any] = {
-                "evaluation_time_ms": int((time.time() - start_time) * 1000),
+                "evaluation_time_ms": round((time.perf_counter() - start_time) * 1000, 3),
                 "cache_hit": False,
                 "triggered_policies": [],
                 "evaluation_performed": False,
@@ -359,7 +376,7 @@ class TealEngine:
         # MONITOR mode: Always allow but log violations
         if effective_mode == PolicyMode.MONITOR:
             metadata = {
-                "evaluation_time_ms": int((time.time() - start_time) * 1000),
+                "evaluation_time_ms": round((time.perf_counter() - start_time) * 1000, 3),
                 "cache_hit": False,
                 "triggered_policies": triggered_policies,
                 "evaluation_performed": True,
@@ -426,7 +443,7 @@ class TealEngine:
         # §5.4: return the computed decision unmodified. This is the only mode that does.
         if effective_mode == PolicyMode.ENFORCE:
             metadata = {
-                "evaluation_time_ms": int((time.time() - start_time) * 1000),
+                "evaluation_time_ms": round((time.perf_counter() - start_time) * 1000, 3),
                 "cache_hit": False,
                 "triggered_policies": triggered_policies,
                 "evaluation_performed": True,

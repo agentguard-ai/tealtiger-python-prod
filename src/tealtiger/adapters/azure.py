@@ -177,7 +177,7 @@ class AzureAgentMiddleware(BaseGovernanceAdapter):
 
         This is the primary in-process integration point.
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         correlation_id = self._generate_correlation_id()
 
         # Translate to GovernanceRequest
@@ -188,7 +188,7 @@ class AzureAgentMiddleware(BaseGovernanceAdapter):
         # Evaluate via TealEngine
         decision = await self._evaluate_via_engine(governance_request)
 
-        duration_ms = int((time.time() - start_time) * 1000)
+        duration_ms = round((time.perf_counter() - start_time) * 1000, 3)
 
         # Build telemetry data
         telemetry = self._build_telemetry(
@@ -245,7 +245,7 @@ class AzureAgentMiddleware(BaseGovernanceAdapter):
         tool_call: AzureToolCall,
         decision: DecisionV13,
         correlation_id: str,
-        duration_ms: int,
+        duration_ms: float,
     ) -> Dict[str, Any]:
         """Build telemetry data for Azure Monitor / Application Insights."""
         return {

@@ -77,7 +77,7 @@ def load_policies() -> dict[str, Any]:
 
 # ── Engine initialization ────────────────────────────────────────
 
-_start_time = time.time()
+_start_time = time.perf_counter()
 _policy = load_policies()
 
 # Import TealEngine — graceful fallback if v1.2 not yet available
@@ -265,7 +265,7 @@ class GovernanceHandler(BaseHTTPRequestHandler):
             "version": "1.2.0",
             "engine_version": _engine_version,
             "mode": POLICY_MODE,
-            "uptime_seconds": round(time.time() - _start_time),
+            "uptime_seconds": round(time.perf_counter() - _start_time),
         })
 
     def _handle_ready(self) -> None:

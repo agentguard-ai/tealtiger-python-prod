@@ -103,7 +103,7 @@ class GuardrailEngine:
         Returns:
             GuardrailEngineResult with aggregated results
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         enabled_guardrails = [g for g in self.guardrails if g.enabled]
 
         if not enabled_guardrails:
@@ -119,7 +119,7 @@ class GuardrailEngine:
         else:
             results = await self._execute_sequential(enabled_guardrails, input_data, context)
 
-        execution_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        execution_time = (time.perf_counter() - start_time) * 1000  # Convert to milliseconds
 
         # Aggregate results
         passed = all(r.get("result", {}).get("passed", False) for r in results)
@@ -174,7 +174,7 @@ class GuardrailEngine:
     ) -> Dict[str, Any]:
         """Execute a single guardrail with timeout and error handling."""
         guardrail_name = guardrail.name
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         try:
             result = await asyncio.wait_for(
@@ -185,7 +185,7 @@ class GuardrailEngine:
             return {
                 "guardrail_name": guardrail_name,
                 "result": result.dict(),
-                "execution_time": (time.time() - start_time) * 1000,
+                "execution_time": (time.perf_counter() - start_time) * 1000,
                 "error": None,
             }
 
@@ -201,7 +201,7 @@ class GuardrailEngine:
                         reason="Guardrail execution timeout",
                         risk_score=100,
                     ).dict(),
-                    "execution_time": (time.time() - start_time) * 1000,
+                    "execution_time": (time.perf_counter() - start_time) * 1000,
                     "error": "Timeout",
                 }
             raise
@@ -218,7 +218,7 @@ class GuardrailEngine:
                         reason=f"Guardrail execution failed: {str(error)}",
                         risk_score=100,
                     ).dict(),
-                    "execution_time": (time.time() - start_time) * 1000,
+                    "execution_time": (time.perf_counter() - start_time) * 1000,
                     "error": str(error),
                 }
             raise

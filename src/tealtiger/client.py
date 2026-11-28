@@ -111,7 +111,7 @@ class TealTiger:
         Returns:
             ExecutionResult with data and security decision
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         try:
             # Validate inputs
@@ -129,7 +129,7 @@ class TealTiger:
             decision = await self._evaluate_security_async(tool_name, parameters, context_dict)
 
             # Update statistics
-            response_time = time.time() - start_time
+            response_time = time.perf_counter() - start_time
             self._update_stats(decision, response_time)
 
             # Call callback if provided
@@ -182,7 +182,7 @@ class TealTiger:
         Returns:
             ExecutionResult with data and security decision
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         try:
             # Validate inputs
@@ -199,7 +199,7 @@ class TealTiger:
             decision = self._evaluate_security_sync(tool_name, parameters, context_dict)
 
             # Update statistics
-            response_time = time.time() - start_time
+            response_time = time.perf_counter() - start_time
             self._update_stats(decision, response_time)
 
             # Call callback if provided
