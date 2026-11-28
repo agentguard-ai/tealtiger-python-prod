@@ -30,6 +30,23 @@ from tealtiger.core.context import (
     ExecutionContext,
     ExecutionContextOptions,
 )
+from tealtiger.core.engine.policy_simulation import (
+    SimulatedDecision,
+    SimulationReport,
+    simulate_policy,
+)
+
+# Policy validation and simulation, for the policy TealEngine evaluates.
+#
+# Not to be confused with `PolicyBuilder` below, which builds a different and
+# unrelated `Policy` — a rules-and-conditions model the engine cannot evaluate.
+# Two policy models exist in this package and only one is enforced; these two
+# functions operate on the enforced one.
+from tealtiger.core.engine.policy_validation import (
+    PolicyValidationResult,
+    ValidationFinding,
+    validate_policy,
+)
 from tealtiger.core.engine.testing import (
     PolicyTestCase,
     PolicyTestReport,
@@ -191,6 +208,12 @@ __all__ = [
     "ExecutionContextOptions",
     "ContextManager",
     "PolicyTestRunner",
+    "PolicyValidationResult",
+    "ValidationFinding",
+    "validate_policy",
+    "SimulatedDecision",
+    "SimulationReport",
+    "simulate_policy",
     "TestCorpora",
     "PolicyTestCase",
     "PolicyTestSuite",

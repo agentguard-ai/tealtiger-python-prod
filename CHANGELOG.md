@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`validate_policy()`** — check a policy document before the engine has to evaluate it.
+  Returns findings rather than raising, so every problem in a policy is reported at once;
+  the engine raises on the first unreadable entry it reaches, which is right for a request
+  path and useless for a configuration check.
+
+  **It answers two questions separately, and that is the point.** `well_formed` means every
+  section and entry the engine would read is legible. `enforceable_here` means this build
+  can enforce everything configured. A policy configuring content governance is a
+  legitimate document that this SDK declines to evaluate (§9.2) — calling it malformed
+  would be wrong, and calling it enforceable would be worse. A single `valid` flag would
+  have to pick one of those two wrong answers.
+
+  **It cannot pass a policy the engine would reject**, because every structural check asks
+  the evaluator's own entry reader rather than re-deriving the rules. One implementation of
+  "what makes a tool entry valid", so there is no second opinion to drift from the first.
+  Asserted by test in both directions.
+
+  Findings carry a stable `code` for branching, alongside the prose: `TOOL_ENTRY_UNREADABLE`,
+  `SECTION_NOT_ENFORCEABLE`, `TOOL_MAP_EMPTY`, `WILDCARD_PERMITS_EVERYTHING`, and others.
+  The warnings cover things that are legal, enforced as written, and usually not what was
+  meant — an empty `tools` map that permits nothing, a `"*"` fallback that disables
+  default-deny, a tool name with whitespace that no request will ever match.
+
+  This is also where the two open specification gaps now live: a malformed or missing
+  `allowed` value, and an explicit `tools: null`. Both were pinned by tests in 1.7.0 at
+  evaluation time, with a note that document-level validation belonged at configuration
+  time. This is that.
+
+- **`simulate_policy()`** — dry-run a policy against requests, **using the engine that will
+  enforce it**. Returns each decision with its `triggering_clause`, counts of allowed and
+  denied, and `by_clause`: how many decisions each clause produced, which is the useful
+  view when tuning a policy because it shows which rule is doing the work and which fires
+  for everything or nothing.
+
+  The report states `evaluated_by`, naming the engine and its version. A simulation report
+  that does not say what evaluated it cannot be distinguished from a guess.
+
+  **It raises rather than returning an empty report** when the policy cannot be simulated.
+  Zero decisions must never be mistakable for zero denials — "nothing would be denied" is
+  the single most dangerous thing this package can say incorrectly. Call `validate_policy()`
+  first for the findings without the exception.
+
+  `MONITOR` mode is supported, which answers the rollout question directly: everything is
+  allowed, and here is what would have been blocked, with the clause that would have
+  blocked it.
+
+  **Why these were written rather than ported.** The capability-floor assessment called for
+  porting TypeScript's `PolicyValidator` and `PolicySimulator` (~1,000 lines) to close this
+  gap. Reading them first showed they operate on `SecurityPolicy` — a condition/action/
+  priority rule model with its own evaluator — while `TealEngine` evaluates `TealPolicy`,
+  the shape the conformance corpus scores. The two stacks never reference each other and no
+  adapter exists, so that simulator predicts decisions from an evaluator that will not be
+  the one deciding. Porting it would have given Python validation and simulation for a
+  policy format its own engine cannot evaluate. These are about 200 lines instead, and they
+  operate on what is actually enforced.
+
+  Note that this package has a smaller version of the same split: `tealtiger.policy`'s
+  `PolicyBuilder` builds a rules-and-conditions `Policy` the engine also cannot evaluate.
+  The new functions document which policy they take, and the top-level import block says so.
+
 ## [1.7.0] - 2026-11-27
 
 Tool-allowlist policy is enforced, and verified against the shared conformance corpus in
