@@ -228,7 +228,7 @@ class TealGuard:
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         # Ensure we have a valid ExecutionContext
         execution_context = context or ContextManager.create_context()
@@ -253,7 +253,7 @@ class TealGuard:
             }
             policy_decision = self.engine.evaluate_with_mode(request_context, execution_context)
 
-        execution_time = int((time.time() - start_time) * 1000)
+        execution_time = round((time.perf_counter() - start_time) * 1000, 3)
 
         # Determine overall action based on guardrail and policy results
         all_passed = all(result.passed for result in guardrail_results)
@@ -296,7 +296,7 @@ class TealGuard:
         guardrail_results: List[GuardrailResult],
         policy_decision: Optional[Decision],
         execution_context: ExecutionContext,
-        execution_time: int,
+        execution_time: float,
     ) -> Decision:
         """Build Decision object from guardrail and policy results.
 

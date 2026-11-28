@@ -160,7 +160,7 @@ class TealCircuit:
         Returns:
             Decision object with action, reason_codes, risk_score, and metadata
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         # Ensure we have an ExecutionContext
         execution_context = context or ContextManager.create_context()
@@ -196,7 +196,7 @@ class TealCircuit:
 
         # Build metadata
         metadata: Dict[str, Any] = {
-            "evaluation_time_ms": int((time.time() - start_time) * 1000),
+            "evaluation_time_ms": round((time.perf_counter() - start_time) * 1000, 3),
             "circuit_state": self.state.value,
             "failures": self.failures,
             "last_failure_time": (
